@@ -1,12 +1,12 @@
-import { StateData, AnonymizedReport } from "./types";
+import { StateData, AnonymizedReport } from "./types.js";
 import {
   ALL_INDIA_STATES,
   ALL_DISTRICT_COORDS,
   getDistrictCoordinates,
   getSoilProfileWithFallback,
   getNearestKvkContact,
-} from "./data/indiaData";
-import { getLocalizedFallbackAdvisory } from "./data/panIndiaAdvisory";
+} from "./data/indiaData.js";
+import { getLocalizedFallbackAdvisory } from "./data/panIndiaAdvisory.js";
 
 export {
   ALL_INDIA_STATES,

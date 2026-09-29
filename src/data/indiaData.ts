@@ -1,5 +1,5 @@
 import rawData from "./india_districts.json";
-import { StateData, DistrictData, ResolvedDistrictContext, SoilDataConfidence } from "../types";
+import { StateData, DistrictData, ResolvedDistrictContext, SoilDataConfidence } from "../types.js";
 
 export interface IndiaDatabase {
   version: string;

@@ -1,5 +1,5 @@
-import { Language, SevereWeatherAlert, WeatherSeverity } from "../types";
-import { getDistrictCoordinates } from "./indiaData";
+import { Language, SevereWeatherAlert, WeatherSeverity } from "../types.js";
+import { getDistrictCoordinates } from "./indiaData.js";
 
 // WMO Weather interpretation codes
 export function getWeatherCodeDescription(code: number, lang: Language): string {
