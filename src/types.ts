@@ -100,6 +100,7 @@ export interface StateData {
   state_code: string;
   name: string;
   state_name?: string;
+  agro_climatic_zone?: string;
   districts: DistrictData[];
 }
 

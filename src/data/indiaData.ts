@@ -1,4 +1,4 @@
-import rawData from "./india_districts.json";
+import { INDIA_DISTRICTS_DATA } from "./indiaDistrictsData.js";
 import { StateData, DistrictData, ResolvedDistrictContext, SoilDataConfidence } from "../types.js";
 
 export interface IndiaDatabase {
@@ -7,7 +7,7 @@ export interface IndiaDatabase {
   states: StateData[];
 }
 
-export const INDIA_DATABASE: IndiaDatabase = rawData as IndiaDatabase;
+export const INDIA_DATABASE: IndiaDatabase = INDIA_DISTRICTS_DATA;
 export const ALL_INDIA_STATES: StateData[] = INDIA_DATABASE.states;
 
 // Precompute coordinate lookups for quick dashboard and telemetry lookups
