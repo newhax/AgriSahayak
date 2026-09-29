@@ -1,0 +1,6 @@
+{
+  "name": "AgriSahayak",
+  "description": "Multilingual, voice-first, AI-powered digital agriculture advisory platform for Indian smallholder farmers.",
+  "requestFramePermissions": ["microphone", "camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
