@@ -23,13 +23,19 @@ app.use(express.json({ limit: "20mb" }));
 
 // Lazy initializer for GoogleGenAI to prevent module-load crashes
 let aiClient: GoogleGenAI | null = null;
+let currentApiKey = "";
 
 function getAiClient(): GoogleGenAI {
-  if (!aiClient) {
-    const key = process.env.GEMINI_API_KEY;
-    if (!key) {
-      throw new Error("GEMINI_API_KEY environment variable is required");
-    }
+  const key =
+    process.env.GEMINI_API_KEY ||
+    process.env.GOOGLE_API_KEY ||
+    process.env.VITE_GEMINI_API_KEY ||
+    process.env.API_KEY;
+  if (!key) {
+    throw new Error("GEMINI_API_KEY environment variable is required");
+  }
+  if (!aiClient || currentApiKey !== key) {
+    currentApiKey = key;
     aiClient = new GoogleGenAI({
       apiKey: key,
       httpOptions: {
@@ -179,17 +185,17 @@ function computeAlgorithmicEarlyWarning(reports: Report[]) {
 }
 
 // Endpoint: Healthcheck
-app.get("/api/health", (req, res) => {
+app.get(["/api/health", "/health"], (req, res) => {
   res.json({ status: "ok" });
 });
 
 // Endpoint: Fetch Seeded State/District Metadata
-app.get("/api/states", (req, res) => {
+app.get(["/api/states", "/states"], (req, res) => {
   res.json(SEEDED_STATES);
 });
 
 // Endpoint: Fetch dynamic ICAR soil profile with fallback hierarchy
-app.get("/api/soil-profile", (req, res) => {
+app.get(["/api/soil-profile", "/soil-profile"], (req, res) => {
   const state = String(req.query.state || "Punjab");
   const district = String(req.query.district || "Ludhiana");
   const profile = getSoilProfileWithFallback(state, district);
@@ -197,12 +203,12 @@ app.get("/api/soil-profile", (req, res) => {
 });
 
 // Endpoint: Fetch Anonymized Reports
-app.get("/api/reports", (req, res) => {
+app.get(["/api/reports", "/reports"], (req, res) => {
   res.json(anonymizedReports);
 });
 
 // Endpoint: Log a Diagnosis
-app.post("/api/reports", (req, res) => {
+app.post(["/api/reports", "/reports"], (req, res) => {
   const { state, district, crop, disease, latitude, longitude } = req.body;
   if (!state || !district || !crop || !disease) {
     return res.status(400).json({ error: "Missing required report fields" });
@@ -861,7 +867,7 @@ CRITICAL MANDATE - ANSWER THE FARMER'S SPECIFIC QUESTION DIRECTLY:
 });
 
 // Endpoint: Voice/Text Crop Advisory (Flow 1)
-app.post("/api/advisory", async (req, res) => {
+app.post(["/api/advisory", "/advisory"], async (req, res) => {
   try {
     const state = req.body.state || "Punjab";
     const district = req.body.district || "Ludhiana";
@@ -1046,7 +1052,7 @@ Context:
 });
 
 // Endpoint: Crop Disease Diagnosis (Flow 2)
-app.post("/api/diagnose", async (req, res) => {
+app.post(["/api/diagnose", "/diagnose"], async (req, res) => {
   try {
     const rawImage = req.body.imageBase64 || req.body.image;
     const mimeType = req.body.mimeType || "image/jpeg";
@@ -1145,7 +1151,7 @@ CRITICAL TREATMENT INTEGRITY RULES:
 });
 
 // Endpoint: Cross-District Early Warning analysis (Flow 3)
-app.get("/api/early-warning", async (req, res) => {
+app.get(["/api/early-warning", "/early-warning"], async (req, res) => {
   // 1. Check in-memory cache
   if (cachedEarlyWarning && (Date.now() - cachedEarlyWarning.timestamp < EARLY_WARNING_CACHE_TTL_MS)) {
     return res.json(cachedEarlyWarning.data);
@@ -1210,7 +1216,7 @@ Task:
 });
 
 // Endpoint: Text-to-Speech Generation using gemini-3.1-flash-tts-preview
-app.post("/api/tts", async (req, res) => {
+app.post(["/api/tts", "/tts"], async (req, res) => {
   try {
     const { text, language } = req.body;
     if (!text) {
