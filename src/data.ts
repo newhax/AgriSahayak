@@ -6,6 +6,7 @@ import {
   getSoilProfileWithFallback,
   getNearestKvkContact,
 } from "./data/indiaData";
+import { getLocalizedFallbackAdvisory } from "./data/panIndiaAdvisory";
 
 export {
   ALL_INDIA_STATES,
@@ -13,6 +14,7 @@ export {
   getDistrictCoordinates,
   getSoilProfileWithFallback,
   getNearestKvkContact,
+  getLocalizedFallbackAdvisory,
 };
 export const SEEDED_STATES: StateData[] = ALL_INDIA_STATES;
 export const DISTRICT_COORDS: Record<string, { lat: number; lng: number }> = ALL_DISTRICT_COORDS;

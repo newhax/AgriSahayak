@@ -234,8 +234,9 @@ export default function FloatingCopilot({
               if (dataStr === "[DONE]") break;
               try {
                 const parsed = JSON.parse(dataStr);
-                if (parsed.delta) {
-                  accumulatedText += parsed.delta;
+                const chunk = parsed.delta ?? (parsed.type === "chunk" ? parsed.text : "");
+                if (chunk) {
+                  accumulatedText += chunk;
                   setMessages((prev) =>
                     prev.map((msg) =>
                       msg.id === botMessageId
@@ -243,12 +244,22 @@ export default function FloatingCopilot({
                         : msg
                     )
                   );
-                } else if (parsed.text) {
-                  accumulatedText = parsed.text;
+                } else if (parsed.fullText) {
+                  accumulatedText = parsed.fullText;
                   setMessages((prev) =>
                     prev.map((msg) =>
                       msg.id === botMessageId
-                        ? { ...msg, text: accumulatedText, isStreaming: true }
+                        ? { ...msg, text: accumulatedText, isStreaming: false }
+                        : msg
+                    )
+                  );
+                }
+
+                if (parsed.suggestions && Array.isArray(parsed.suggestions) && parsed.suggestions.length > 0) {
+                  setMessages((prev) =>
+                    prev.map((msg) =>
+                      msg.id === botMessageId
+                        ? { ...msg, suggestions: parsed.suggestions }
                         : msg
                     )
                   );
@@ -274,7 +285,7 @@ export default function FloatingCopilot({
                   text: accumulatedText || msg.text,
                   isStreaming: false,
                   actionTarget,
-                  suggestions: loc.quickPrompts.slice(0, 3),
+                  suggestions: msg.suggestions && msg.suggestions.length > 0 ? msg.suggestions : loc.quickPrompts.slice(0, 3),
                 }
               : msg
           )
@@ -298,7 +309,7 @@ export default function FloatingCopilot({
                   text: replyText,
                   isStreaming: false,
                   actionTarget,
-                  suggestions: loc.quickPrompts.slice(0, 3),
+                  suggestions: (data.suggestions && data.suggestions.length > 0) ? data.suggestions : loc.quickPrompts.slice(0, 3),
                 }
               : msg
           )
@@ -306,7 +317,11 @@ export default function FloatingCopilot({
       }
     } catch (err: any) {
       console.warn("Hero Assistant chat error:", err);
-      const fallbackReply = `Hello! In ${selectedDistrict}, ${selectedState}, you can explore Crop Advisory, Plant Doctor, and Outbreak Radar map for live recommendations.`;
+      const fallbackReply = selectedLanguage === "hi"
+        ? `राम-राम भाई! ${selectedDistrict} (${selectedState}) में आपके सवाल "${text}" के संबंध में: संतुलित जैविक खाद, सही समय पर सिंचाई और आईसीएआर की वैज्ञानिक पद्धतियों का पालन करें। अधिक जानकारी के लिए 'फसल सलाह' [ACTION:advisory] या 'रोग निदान' [ACTION:diagnosis] देखें।`
+        : selectedLanguage === "pa"
+        ? `ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ ਵੀਰ ਜੀ! ${selectedDistrict} ਵਿੱਚ ਤੁਹਾਡੇ ਸਵਾਲ "${text}" ਲਈ: ਸੰਤੁਲਿਤ ਦੇਸੀ ਖਾਦ ਅਤੇ ਸਮੇਂ ਸਿਰ ਪਾਣੀ ਲਗਾਓ। ਹੋਰ ਜਾਣਕਾਰੀ ਲਈ 'ਫ਼ਸਲ ਸਲਾਹ' [ACTION:advisory] ਜਾਂ 'ਫ਼ਸਲ ਡਾਕਟਰ' [ACTION:diagnosis] ਖੋਲ੍ਹੋ।`
+        : `Hello my friend! For ${selectedDistrict}, ${selectedState} regarding "${text}": We recommend balanced nutrition and moisture-conserving practices. You can also explore Crop Advisory [ACTION:advisory] or Plant Doctor [ACTION:diagnosis].`;
       setMessages((prev) =>
         prev.map((msg) =>
           msg.id === botMessageId
@@ -522,7 +537,7 @@ export default function FloatingCopilot({
             </div>
 
             {/* Message Body (.chat-body / .chat-messages) */}
-            <div className="chat-messages" ref={messagesEndRef}>
+            <div className="chat-messages">
               {messages.map((m) => (
                 <div
                   key={m.id}
@@ -646,6 +661,8 @@ export default function FloatingCopilot({
                   <span>●</span>
                 </div>
               )}
+              {/* Scroll anchor */}
+              <div ref={messagesEndRef} className="h-0 w-full" />
             </div>
 
             {/* Input Footer (.chat-foot / .chat-input-bar) */}

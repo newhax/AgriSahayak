@@ -481,7 +481,7 @@ p, span, button, input, select, textarea, label {
 .fab-trigger {
   position: fixed;
   right: 1.5rem;
-  bottom: 1.5rem;
+  bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
   z-index: 90;
   width: 56px;
   height: 56px;
@@ -494,6 +494,8 @@ p, span, button, input, select, textarea, label {
   place-items: center;
   box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.35);
   transition: transform 180ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 180ms ease;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 .fab-trigger:hover {
   transform: scale(1.08);
@@ -507,10 +509,11 @@ p, span, button, input, select, textarea, label {
 .chat-window {
   position: fixed;
   right: 1.5rem;
-  bottom: 5.75rem;
+  bottom: calc(5.75rem + env(safe-area-inset-bottom, 0px));
   z-index: 90;
-  width: min(390px, calc(100vw - 3rem));
-  height: min(580px, calc(100vh - 7.5rem));
+  width: min(400px, calc(100vw - 3rem));
+  height: min(600px, calc(100vh - 7.5rem));
+  max-height: calc(100dvh - 7.5rem - env(safe-area-inset-bottom, 0px));
   display: flex;
   flex-direction: column;
   border-radius: 1.4rem;
@@ -519,6 +522,7 @@ p, span, button, input, select, textarea, label {
   border: 1px solid rgba(24, 24, 27, 0.1);
   box-shadow: 0 24px 60px -15px rgba(16, 24, 40, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05);
   transform-origin: bottom right;
+  overscroll-behavior: contain;
 }
 
 .dark .chat-window {
@@ -531,13 +535,13 @@ p, span, button, input, select, textarea, label {
 .chat-head,
 .chat-header {
   height: 58px;
-  padding: 0.9rem 1.2rem;
+  padding: 0.75rem 1rem;
   background: #fafafa;
   border-bottom: 1px solid #ececef;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
+  gap: 0.6rem;
   flex-shrink: 0;
 }
 .dark .chat-head,
@@ -567,22 +571,28 @@ p, span, button, input, select, textarea, label {
   flex: 1;
 }
 .title-group .title {
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   font-weight: 700;
   line-height: 1.2;
   color: #18181b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .dark .title-group .title {
   color: #f4f4f5;
 }
 
 .title-group .subtitle {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   color: #71717a;
   display: flex;
   align-items: center;
-  gap: 0.375rem;
+  gap: 0.35rem;
   line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .dark .title-group .subtitle {
   color: #a1a1aa;
@@ -594,6 +604,7 @@ p, span, button, input, select, textarea, label {
   border-radius: 9999px;
   background: #22c55e;
   display: inline-block;
+  flex-shrink: 0;
   box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.25);
   animation: statusPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
@@ -607,10 +618,12 @@ p, span, button, input, select, textarea, label {
 .chat-messages {
   flex: 1;
   overflow-y: auto;
-  padding: 1.1rem;
+  padding: 1rem;
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 /* Bubbles */
@@ -618,12 +631,13 @@ p, span, button, input, select, textarea, label {
   font-size: 0.88rem;
   line-height: 1.5;
   word-break: break-word;
+  overflow-wrap: break-word;
   position: relative;
 }
 .bubble.assistant,
 .bubble.copilot {
   align-self: flex-start;
-  max-width: 84%;
+  max-width: 86%;
   background: #fafafa;
   border: 1px solid #e4e4e7;
   color: #18181b;
@@ -639,7 +653,7 @@ p, span, button, input, select, textarea, label {
 
 .bubble.user {
   align-self: flex-end;
-  max-width: 84%;
+  max-width: 86%;
   background: #18181b;
   color: #ffffff;
   border-radius: 16px 16px 4px 16px;
@@ -681,8 +695,8 @@ p, span, button, input, select, textarea, label {
   margin-top: 0.4rem;
 }
 .suggestion-pill {
-  font-size: 0.78rem;
-  padding: 0.35rem 0.75rem;
+  font-size: 0.76rem;
+  padding: 0.35rem 0.7rem;
   border-radius: 9999px;
   border: 1px solid #e4e4e7;
   background: #ffffff;
@@ -690,6 +704,8 @@ p, span, button, input, select, textarea, label {
   cursor: pointer;
   transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1);
   font-weight: 500;
+  line-height: 1.3;
+  text-align: left;
 }
 .dark .suggestion-pill {
   background: #202024;
@@ -709,13 +725,13 @@ p, span, button, input, select, textarea, label {
 /* Input Footer */
 .chat-foot,
 .chat-input-bar {
-  height: 64px;
-  padding: 0.75rem 0.9rem;
+  min-height: 60px;
+  padding: 0.65rem 0.85rem;
   border-top: 1px solid #ececef;
   background: #ffffff;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.45rem;
   flex-shrink: 0;
 }
 .dark .chat-foot,
@@ -729,10 +745,11 @@ p, span, button, input, select, textarea, label {
   background: #fafafa;
   border: 1px solid #e4e4e7;
   border-radius: 9999px;
-  padding: 0.65rem 1rem;
-  font-size: 0.85rem;
+  padding: 0.65rem 0.95rem;
+  font-size: 0.88rem;
   color: #18181b;
   outline: none;
+  min-width: 0;
   transition: all 150ms ease;
 }
 .dark .chat-input-pill {
@@ -749,14 +766,83 @@ p, span, button, input, select, textarea, label {
 @media (max-width: 640px) {
   .fab-trigger {
     right: 1rem;
-    bottom: 1rem;
+    bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+    width: 52px;
+    height: 52px;
   }
   .chat-window {
-    right: 0.75rem;
-    left: 0.75rem;
-    bottom: 5.25rem;
+    right: 0.65rem;
+    left: 0.65rem;
+    bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
     width: auto;
-    height: min(560px, calc(100vh - 6.5rem));
+    max-width: calc(100vw - 1.3rem);
+    height: min(560px, calc(100dvh - 5.5rem - env(safe-area-inset-bottom, 0px)));
+    max-height: calc(100dvh - 5.5rem - env(safe-area-inset-bottom, 0px));
+    border-radius: 1.25rem;
+  }
+  .chat-head,
+  .chat-header {
+    height: 52px;
+    padding: 0.6rem 0.85rem;
+  }
+  .chat-body,
+  .chat-messages {
+    padding: 0.85rem 0.75rem;
+    gap: 0.75rem;
+  }
+  .bubble.assistant,
+  .bubble.copilot,
+  .bubble.user {
+    max-width: 90%;
+    font-size: 0.86rem;
+    padding: 0.65rem 0.85rem;
+  }
+  .chat-foot,
+  .chat-input-bar {
+    min-height: 56px;
+    padding: 0.5rem 0.65rem;
+    gap: 0.35rem;
+  }
+  /* Ensure 16px font-size to prevent iOS Safari auto-zoom on input focus */
+  .chat-input-pill {
+    font-size: 16px;
+    padding: 0.55rem 0.85rem;
+  }
+}
+
+/* Extra Compact Screens (< 380px) */
+@media (max-width: 380px) {
+  .chat-window {
+    right: 0.4rem;
+    left: 0.4rem;
+    bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+    max-width: calc(100vw - 0.8rem);
+    height: min(520px, calc(100dvh - 5rem - env(safe-area-inset-bottom, 0px)));
+    max-height: calc(100dvh - 5rem - env(safe-area-inset-bottom, 0px));
+  }
+  .bubble.assistant,
+  .bubble.copilot,
+  .bubble.user {
+    max-width: 92%;
+    font-size: 0.84rem;
+  }
+  .chat-input-pill {
+    padding: 0.5rem 0.75rem;
+  }
+}
+
+/* Landscape / Very Short Screen Viewports */
+@media (max-height: 540px) {
+  .chat-window {
+    height: calc(100dvh - 2rem);
+    max-height: calc(100dvh - 2rem);
+    bottom: 1rem;
+    top: 1rem;
+  }
+  .chat-head,
+  .chat-header {
+    height: 46px;
+    padding: 0.45rem 0.75rem;
   }
 }
 

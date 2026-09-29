@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "motion/react";
 import { Language, CropRecommendationResponse, SUPPORTED_LANGUAGES } from "../types";
-import { getSoilProfileWithFallback } from "../data";
+import { getSoilProfileWithFallback, getLocalizedFallbackAdvisory } from "../data";
 import {
   Mic,
   MicOff,
@@ -190,13 +190,20 @@ export default function Advisory({
     }
   }, [selectedLanguage, currentLangObj]);
 
+  // Auto-generate initial advisory for selected district on mount or when district changes if no advisory yet
+  useEffect(() => {
+    const defaultQuery = PRESET_QUERIES[selectedLanguage]?.[0] || "What should I plant this season for high yield?";
+    if (!result && !loading) {
+      executeAdvisory(defaultQuery, selectedLanguage);
+    }
+  }, [selectedState, selectedDistrict]);
+
   // Re-generate if language changes and query exists
   useEffect(() => {
     if (prevLangRef.current !== selectedLanguage) {
       prevLangRef.current = selectedLanguage;
-      if (activeQuery) {
-        executeAdvisory(activeQuery, selectedLanguage);
-      }
+      const queryToUse = activeQuery || PRESET_QUERIES[selectedLanguage]?.[0] || "What should I plant this season for high yield?";
+      executeAdvisory(queryToUse, selectedLanguage);
     }
   }, [selectedLanguage]);
 
@@ -263,6 +270,10 @@ export default function Advisory({
       }
 
       const data: CropRecommendationResponse = await response.json();
+      if (!data || !Array.isArray(data.crops) || data.crops.length === 0) {
+        throw new Error("Invalid advisory response format");
+      }
+
       setResult(data);
 
       const speechScript =
@@ -296,8 +307,37 @@ export default function Advisory({
         console.warn("TTS generation warning:", ttsErr);
       }
     } catch (error: any) {
-      console.error("Advisory error:", error);
-      setErrorMessage(error?.message || "Failed to load advisory. Please try again.");
+      console.warn("API/Vercel network fallback, computing localized agro-climatic advisory:", error);
+      
+      const currentMonth = new Date().getMonth();
+      let season = "Kharif (Monsoon)";
+      if (currentMonth >= 9 && currentMonth <= 1) {
+        season = "Rabi (Winter)";
+      } else if (currentMonth >= 2 && currentMonth <= 5) {
+        season = "Zaid (Summer)";
+      }
+
+      const soil = getSoilProfileWithFallback(selectedState, selectedDistrict);
+      const fallbackData = getLocalizedFallbackAdvisory(
+        langToUse,
+        selectedState,
+        selectedDistrict,
+        soil.soilType,
+        soil.ph,
+        soil.organicCarbon,
+        soil.moistureValue,
+        season,
+        soil.agroClimaticZone
+      );
+
+      setResult(fallbackData);
+      const speechScript =
+        fallbackData.audioTranscript ||
+        `${fallbackData.crops?.map((c) => c.cropName).join(", ") || ""}. ${
+          fallbackData.riskMitigation || ""
+        }`;
+      setCurrentSpeechText(speechScript);
+      setErrorMessage(null);
     } finally {
       setLoading(false);
     }

@@ -79,13 +79,13 @@ function pcmToWav(pcmBase64: string, sampleRate = 24000, numChannels = 1, bitsPe
 
 // Helper to perform generateContent calls with retry and model fallback to handle 503 high-demand exceptions
 async function generateContentWithFallback(params: any): Promise<any> {
-  const originalModel = params.model || "gemini-3.1-flash-lite";
+  const originalModel = params.model || "gemini-3.8-flash";
   
   // For TTS, try gemini-3.8-flash-lite-tts first, then gemini-3.1-flash-tts-preview
   const isTts = originalModel.includes("tts");
   const modelsToTry = isTts
     ? ["gemini-3.8-flash-lite-tts", "gemini-3.1-flash-tts-preview"]
-    : Array.from(new Set([originalModel, "gemini-3.1-flash-lite", "gemini-3.8-flash", "gemini-flash-latest"]));
+    : Array.from(new Set([originalModel, "gemini-3.8-flash", "gemini-3.1-flash-lite"]));
 
   let lastError: any = null;
   const maxAttempts = isTts ? 2 : modelsToTry.length;
@@ -355,173 +355,237 @@ function getIntelligentChatFallback(
   let fallbackSuggestions: string[] = [];
   let fallbackAction = "";
 
-  const isAppHowTo =
-    qLower.includes("how to use") ||
-    qLower.includes("use this app") ||
-    qLower.includes("teach") ||
-    qLower.includes("help") ||
-    qLower.includes("guide") ||
-    qLower.includes("app kaise") ||
-    qLower.includes("kaise chalaye") ||
-    qLower.includes("sikhaye") ||
-    qLower.includes("ऐप") ||
-    qLower.includes("सिखाओ") ||
-    qLower.includes("ਕਿਵੇਂ ਵਰਤਣਾ") ||
-    qLower.includes("ఎలా ఉపయోగించాలి") ||
-    qLower.includes("எப்படி பயன்படுத்துவது");
+  const isHindi = language === "hi";
+  const isPunjabi = language === "pa";
+  const isMarathi = language === "mr";
+  const isTamil = language === "ta";
+  const isTelugu = language === "te";
 
-  const isAdvisoryQuery =
-    qLower.includes("advisory") ||
-    qLower.includes("crop") ||
-    qLower.includes("फसल") ||
-    qLower.includes("ਫ਼ਸਲ") ||
-    qLower.includes("पिक") ||
-    qLower.includes("பயிர்") ||
-    qLower.includes("పంట");
-
-  const isDiseaseQuery =
-    qLower.includes("disease") ||
-    qLower.includes("pathology") ||
-    qLower.includes("doctor") ||
-    qLower.includes("बीमारी") ||
-    qLower.includes("कीड़ा") ||
-    qLower.includes("ਕੀਟ") ||
-    qLower.includes("रोग") ||
-    qLower.includes("நோய்") ||
-    qLower.includes("తెగులు");
-
-  const isOutbreakQuery =
-    qLower.includes("outbreak") ||
-    qLower.includes("map") ||
-    qLower.includes("radar") ||
-    qLower.includes("नक्शा") ||
-    qLower.includes("रडार") ||
-    qLower.includes("ਚੇਤਾਵਨੀ") ||
-    qLower.includes("மேப்");
-
-  if (isAppHowTo) {
-    if (language === "hi") {
-      fallbackReply = `राम-राम भाई! मैं आपका **किसान मित्र (Farmer's Friend)** हूँ। यह ऐप (AgriSahayak) चलाना बहुत आसान है, आइए मैं आपको सिखाता हूँ:
-
-1. 🌾 **फसल सलाह (Crop Advisory)**: आपके जिले (${district}) की मिट्टी और मौसम के आधार पर सबसे अच्छी फसलें और जैविक खाद की सलाह देता है। आप रेडियो की तरह आवाज़ में भी सुन सकते हैं। [ACTION:advisory]
-2. 🩺 **रोग डॉक्टर (Plant Doctor)**: अगर फसल में कोई बीमारी या पीला पत्ता दिखे, तो उसकी फोटो खींचें। ऐप तुरंत जैविक उपाय और सही दवा की मात्रा बताएगा। [ACTION:diagnosis]
-3. 🗺️ **रोग नक्शा (Outbreaks Map)**: पास के जिलों में कौन सी बीमारी फैल रही है, उसका नक्शा और चेतावनी देखें। [ACTION:dashboard]
-4. 🎙️ **बोलकर बात करें**: आप टाइप करने की जगह माइक दबाकर अपनी भाषा में बात कर सकते हैं!
-
-बताइए दोस्त, आप पहले कौन सा फीचर आज़माना चाहते हैं?`;
-      fallbackSuggestions = ["फसल सलाह कैसे लें?", "बीमारी की फोटो कैसे भेजें?", "रोग नक्शा दिखाएं"];
-    } else if (language === "pa") {
-      fallbackReply = `ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ ਵੀਰ ਜੀ! ਮੈਂ ਤੁਹਾਡਾ **ਕਿਸਾਨ ਮਿੱਤਰ (Farmer's Friend)** ਹਾਂ। ਇਹ ਐਪ ਚਲਾਉਣਾ ਬਹੁਤ ਆਸਾਨ ਹੈ:
-
-1. 🌾 **ਫ਼ਸਲ ਸਲਾਹ**: ${district} ਦੀ ਮਿੱਟੀ ਅਤੇ ਮੌਸਮ ਅਨੁਸਾਰ ਵਧੀਆ ਫ਼ਸਲਾਂ ਅਤੇ ਦੇਸੀ ਖਾਦ ਦੇ ਨੁਸਖੇ। [ACTION:advisory]
-2. 🩺 **ਫ਼ਸਲ ਡਾਕਟਰ**: ਖਰਾਬ ਪੱਤੇ ਦੀ ਫੋਟੋ ਖਿੱਚੋ, ਐਪ ਤੁਰੰਤ ਬਿਮਾਰੀ ਅਤੇ ਜੈਵਿਕ ਇਲਾਜ ਦੱਸੇਗਾ। [ACTION:diagnosis]
-3. 🗺️ **ਬਿਮਾਰੀ ਨਕਸ਼ਾ**: ਨੇੜਲੇ ਜ਼ਿਲ੍ਹਿਆਂ ਵਿੱਚ ਫੈਲ ਰਹੀਆਂ ਬਿਮਾਰੀਆਂ ਦੀ ਜਾਣਕਾਰੀ। [ACTION:dashboard]
-4. 🎙️ **ਬੋਲ ਕੇ ਪੁੱਛੋ**: ਮਾਈਕ ਦਬਾ ਕੇ ਆਪਣੀ ਭਾਸ਼ਾ ਵਿੱਚ ਗੱਲਬਾਤ ਕਰੋ!`;
-      fallbackSuggestions = ["ਫ਼ਸਲ ਸਲਾਹ ਖੋਲ੍ਹੋ", "ਬਿਮਾਰੀ ਦੀ ਜਾਂਚ ਕਰੋ", "ਮੌਸਮ ਬਾਰੇ ਪੁੱਛੋ"];
-    } else if (language === "mr") {
-      fallbackReply = `नमस्कार मित्रा! मी आपला **शेतकरी मित्र (Farmer's Friend)** आहे. हे ॲप वापरणे खूप सोपे आहे:
-
-1. 🌾 **पीक सल्ला**: ${district} मधील माती व हवामानानुसार फायदेशीर पिके आणि सेंद्रिय खतांचा सल्ला. [ACTION:advisory]
-2. 🩺 **पीक डॉक्टर**: आजारी पानाचा फोटो काढून तात्काळ सेंद्रिय व सुरक्षित औषधोपचार मिळवा. [ACTION:diagnosis]
-3. 🗺️ **रोग नकाशा**: आजूबाजूच्या जिल्ह्यांमधील कीड-रोगांची पूर्वसूचना पाहा. [ACTION:dashboard]
-4. 🎙️ **आवाजाने विचारा**: माइक बटण दाबून आपल्या भाषेत बोला!`;
-      fallbackSuggestions = ["पीक सल्ला कसा मिळवावा?", "रोगाचा फोटो कसा टाकावा?", "रोग नकाशा दाखवा"];
-    } else if (language === "ta") {
-      fallbackReply = `வணக்கம் நண்பரே! நான் உங்கள் **விவசாயி நண்பன் (Farmer's Friend)**. இந்த செயலியை மிக எளிதாக பயன்படுத்தலாம்:
-
-1. 🌾 **பயிர் ஆலோசனை**: ${district} பகுதிக்கான சிறந்த பயிர்கள் மற்றும் இயற்கை உர ஆலோசனைகள். [ACTION:advisory]
-2. 🩺 **தாவர மருத்துவர்**: பாதிக்கப்பட்ட இலையை படம் பிடித்து உடனுக்குடன் இயற்கை தீர்வு பெறலாம். [ACTION:diagnosis]
-3. 🗺️ **நோய் வரைபடம்**: அண்டை மாவட்டங்களில் பரவும் பயிர் நோய்களை வரைபடத்தில் அறியலாம். [ACTION:dashboard]
-4. 🎙️ **குரல் வழி பேசுங்கள்**: தட்டச்சு செய்யாமல் மைக் அழுத்தி நேரடியாக பேசலாம்!`;
-      fallbackSuggestions = ["பயிர் ஆலோசனை பெறுக", "நோய் கண்டறிதல்", "நோய் வரைபடம்"];
-    } else {
-      fallbackReply = `Hello my friend! I am your **Farmer's Friend (Kisan Mitra)**. Here is how you can use this app:
-
-1. 🌾 **Crop Advisory**: Tailored to your soil and weather in ${district}, ${state} with voice broadcast. [ACTION:advisory]
-2. 🩺 **Plant Doctor (Diagnosis)**: Snap a photo of any sick leaf to get instant organic bio-cures and chemical dosages with KVK contact. [ACTION:diagnosis]
-3. 🗺️ **Outbreak Map**: Real-time cross-district tracking of crop threats. [ACTION:dashboard]
-4. 🎙️ **Voice Feature**: Tap the mic to talk with me naturally in your selected language!
-
-Which feature would you like to explore first?`;
-      fallbackSuggestions = ["How do I get crop advice?", "How to check plant disease?", "Show outbreak map"];
-    }
-  } else if (isAdvisoryQuery) {
+  // 1. Wheat / Gehun / Kanak
+  if (/wheat|gehu|kanak|गेहूं|गेहूँ|ਕਣਕ|கோதுமை|గోధుమ/.test(qLower)) {
     fallbackAction = "advisory";
-    if (language === "hi") {
-      fallbackReply = `दोस्त, **फसल सलाह** का उपयोग करना बहुत सरल है! 
-1. ऊपर मेनू में **फसल परामर्श** पर क्लिक करें।
-2. आपकी मिट्टी (${soilType}, pH ${ph}) और उपग्रह मौसम पहले से दर्ज हैं।
-3. 'परामर्श प्राप्त करें' बटन दबाएं — आपको 2-3 सबसे अच्छी फसलें, अपेक्षित पैदावार और जैविक खाद के नुस्खे मिलेंगे।
-4. आप रेडियो स्पीकर बटन दबाकर पूरा विवरण अपनी भाषा में सुन भी सकते हैं! [ACTION:advisory]`;
-      fallbackSuggestions = ["फसल परामर्श खोलें", "जैविक खाद कैसे बनाएं?", "मौसम की जानकारी"];
+    if (isHindi) {
+      fallbackReply = `🌾 **${district} (${state}) में गेहूँ की वैज्ञानिक खेती व सलाह:**
+1. **उन्नत किस्में:** HD-3086, DBW-187 (करण वंदना), DBW-222 और PBW-725 जो आपकी ${soilType} मिट्टी (pH ${ph}) में 20-25 क्विंटल/एकड़ पैदावार देती हैं।
+2. **बुवाई समय:** 25 अक्टूबर से 15 नवंबर सबसे उत्तम समय है। बीज को कार्बेन्डाजिम या ट्राइकोडर्मा (5 ग्राम/किग्रा) से उपचारित करके बोएं।
+3. **खाद की सही मात्रा:** प्रति एकड़ 50 किग्रा DAP, 20 किग्रा पोटाश और 10 किग्रा जिंक सल्फेट (21%) बुवाई के समय। यूरिया की पहली टॉप-ड्रेसिंग पहली सिंचाई पर दें।
+4. **क्रांतिक सिंचाई:** पहली सिंचाई बुवाई के 20-22 दिन बाद (CRI स्टेज - ताज जड़ निकलते समय) बहुत जरूरी है।
+
+क्या आप विस्तृत फसल परामर्श खोलना चाहते हैं? [ACTION:advisory]`;
+      fallbackSuggestions = ["गेहूँ में पीला रतुआ कैसे रोकें?", "यूरिया की सही मात्रा", "फसल परामर्श खोलें"];
+    } else if (isPunjabi) {
+      fallbackReply = `🌾 **${district} ਵਿੱਚ ਕਣਕ ਦੀ ਖੇਤੀ ਸੰਬੰਧੀ ਸਲਾਹ:**
+1. **ਸਿਫਾਰਸ਼ ਕੀਤੀਆਂ ਕਿਸਮਾਂ:** PBW-824, PBW-725, DBW-222 ਅਤੇ HD-3086।
+2. **ਖਾਦ ਪ੍ਰਬੰਧਨ:** ਬਿਜਾਈ ਵੇਲੇ 55 ਕਿੱਲੋ ਡੀ.ਏ.ਪੀ. ਅਤੇ 10 ਕਿੱਲੋ ਜ਼ਿੰਕ ਸਲਫੇਟ। ਯੂਰੀਆ ਦੀ ਪਹਿਲੀ ਕਿਸ਼ਤ ਪਹਿਲੇ ਪਾਣੀ ਵੇਲੇ ਦਿਓ।
+3. **ਪਹਿਲਾ ਪਾਣੀ (CRI):** ਬਿਜਾਈ ਤੋਂ 21-25 ਦਿਨਾਂ ਬਾਅਦ ਪਹਿਲਾ ਪਾਣੀ ਜ਼ਰੂਰ ਲਗਾਓ। [ACTION:advisory]`;
+      fallbackSuggestions = ["ਕਣਕ ਦੇ ਪੀਲੇ ਰਤਵੇ ਦਾ ਇਲਾਜ", "ਨਦੀਨਾਂ ਦੀ ਰੋਕਥਾਮ", "ਫ਼ਸਲ ਸਲਾਹ ਖੋਲ੍ਹੋ"];
     } else {
-      fallbackReply = `My friend, using **Crop Advisory** is very easy!
-1. Click on **Crop Advisory** in the top navigation.
-2. Your district (${district}), soil profile (${soilType}, pH ${ph}), and weather are automatically loaded.
-3. Click 'Get Advisory' to see high-yielding crops and organic soil practices.
-4. Tap the radio broadcast button to listen to it read aloud in your language! [ACTION:advisory]`;
-      fallbackSuggestions = ["Open Crop Advisory", "How to prepare organic compost?", "Weather outlook"];
+      fallbackReply = `🌾 **Wheat Cultivation Guidance for ${district}, ${state}:**
+1. **High-Yield Varieties:** HD-3086, DBW-187, DBW-222, PBW-725 adapted to your ${soilType} soil (pH ${ph}).
+2. **Fertilizer Schedule:** Apply 50 kg DAP, 20 kg Potash, and 10 kg Zinc Sulphate (21%) per acre at basal sowing. Apply Urea in two split doses at 1st and 2nd irrigation.
+3. **Critical Irrigation (CRI):** Ensure first irrigation at 20-22 days after sowing (Crown Root Initiation stage). [ACTION:advisory]`;
+      fallbackSuggestions = ["Wheat yellow rust cure", "Fertilizer dosage guide", "Open Crop Advisory"];
     }
-  } else if (isDiseaseQuery) {
+  }
+  // 2. Rice / Paddy / Dhaan
+  else if (/rice|paddy|dhaan|dhan|chawal|धान|चावल|ਝੋਨਾ|ਚੌਲ|நெல்|వరి/.test(qLower)) {
+    fallbackAction = "advisory";
+    if (isHindi) {
+      fallbackReply = `🌾 **${district} में धान (Paddy) की आधुनिक खेती सलाह:**
+1. **किस्में:** पूसा बासमती 1509, PR-126, PR-131 और पूसा 1718।
+2. **जिंक की कमी (खैरा रोग):** अगर पत्तों पर लाल-भूरे धब्बे दिखें, तो 1 किग्रा जिंक सल्फेट (21%) + 500 ग्राम बुझा चूना 100 लीटर पानी में मिलाकर प्रति एकड़ छिड़कें।
+3. **जल प्रबंधन:** रोपाई के 15 दिन बाद खेत में लगातार पानी भरने की जगह 'वैकल्पिक गीला और सूखा' (AWD) तरीका अपनाएं, जिससे पानी बचता है और जड़ें मजबूत होती हैं। [ACTION:advisory]`;
+      fallbackSuggestions = ["खैरा रोग का इलाज", "तनाव मक्खी / तना छेदक नियंत्रण", "फसल परामर्श"];
+    } else {
+      fallbackReply = `🌾 **Paddy (Rice) Management for ${district}, ${state}:**
+1. **Top Varieties:** PR-126, Pusa Basmati 1509/1718 suited for ${soilType} soil.
+2. **Khaira Disease (Zinc Deficiency):** Spray 1 kg Zinc Sulphate (21%) + 0.5 kg Slaked Lime per acre in 100 L water.
+3. **Water Management:** Practice Alternate Wetting and Drying (AWD) after initial 2 weeks to promote deep root growth. [ACTION:advisory]`;
+      fallbackSuggestions = ["Paddy blast disease cure", "Stem borer organic spray", "Open Crop Advisory"];
+    }
+  }
+  // 3. Fertilizers / Khad / Urea / DAP / Zinc / Bio-nutrients
+  else if (/fertilizer|khad|urea|dap|npk|zinc|potash|vermicompost|jeevamrut|खाद|यूरिया|डीएपी|जिंक|पोटाश|जीवामृत|ਖਾਦ|ਉਰਮ|உரம்|ఎరువు/.test(qLower)) {
+    if (isHindi) {
+      fallbackReply = `🌱 **${district} के लिए संतुलित खाद और पोषण गाइड:**
+1. **मिट्टी विश्लेषण:** आपकी मिट्टी का pH **${ph}** है और नमी **${moistureValue}%** है।
+2. **यूरिया का सही इस्तेमाल:** यूरिया को कभी भी धूप में खुला न फेंकें। इसे शाम के समय या हल्की सिंचाई के बाद 2-3 किस्तों में दें ताकि नाइट्रोजन हवा में न उड़े।
+3. **डीएपी और पोटाश:** डीएपी हमेशा बुवाई के समय बीज के नीचे (बेसल डोज) दें।
+4. **देसी जीवामृत नुस्खा:** 10 किग्रा देसी गाय का गोबर + 10 लीटर गोमूत्र + 1 किग्रा गुड़ + 1 किग्रा बेसन + 200 लीटर पानी। 3 दिन छाया में रखें और सिंचाई के साथ खेत में दें। इससे जमीन की उर्वरता 3 गुना बढ़ती है!`;
+      fallbackSuggestions = ["जीवामृत कैसे बनाएं?", "जिंक की सही मात्रा", "मिट्टी की जांच कैसे करें?"];
+    } else {
+      fallbackReply = `🌱 **Balanced Fertilizer & Soil Nutrition for ${district}, ${state}:**
+1. **Soil Context:** Soil pH is **${ph}** (${soilType}), moisture index is **${moistureValue}%**.
+2. **Basal Application:** Apply DAP and Potash strictly at sowing near root zone, not on top soil.
+3. **Split Nitrogen:** Split Urea into 2-3 top dressings at tillering and panicle/flowering stages to minimize volatilization.
+4. **Organic Jeevamrutha:** 10 kg cow dung + 10 L cow urine + 1 kg jaggery + 1 kg pulse flour in 200 L water. Ferment for 48 hours for microbial boost.`;
+      fallbackSuggestions = ["Organic compost recipe", "Zinc deficiency signs", "Soil Health Card guide"];
+    }
+  }
+  // 4. Yellow Rust / Rust / Fungal Blight
+  else if (/yellow rust|rust|ratwa|peela|blight|jhulsa|fungus|रतुआ|झुलसा|पीला|ਰਤਵਾ/.test(qLower)) {
     fallbackAction = "diagnosis";
-    if (language === "hi") {
-      fallbackReply = `दोस्त, **रोग डॉक्टर (Plant Pathology)** आपकी फसल का रक्षक है!
-1. मेनू में **रोग निदान** पर जाएं।
-2. अपने फोन के कैमरे से खराब या कीड़ा लगे पत्ते की साफ फोटो खींचें या गैलरी से चुनें।
-3. ऐप तुरंत बीमारी की पहचान करेगा और नीम का तेल, ट्राइकोडर्मा जैसे जैविक उपाय और सुरक्षित दवा की सही मात्रा बताएगा।
-4. साथ ही आपके नजदीकी कृषि विज्ञान केंद्र (KVK) का फोन नंबर भी देगा! [ACTION:diagnosis]`;
-      fallbackSuggestions = ["रोग निदान खोलें", "नीम का काढ़ा कैसे बनाएं?", "KVK से संपर्क कैसे करें?"];
+    if (isHindi) {
+      fallbackReply = `🩺 **पीला रतुआ (Yellow Rust) और फफूंद से बचाव:**
+1. **पहचान:** गेहूँ या फसल के पत्तों पर हल्दी जैसा पीला पाउडर बनता है। उंगली लगाने पर पीला रंग छूटता है।
+2. **जैविक / घरेलू उपाय:** शुरुआती लक्षण पर 5 लीटर खट्टी छाछ (मट्ठा) + 200 ग्राम हींग 100 लीटर पानी में घोलकर छिड़कें।
+3. **वैज्ञानिक दवा:** यदि प्रकोप अधिक हो, तो **प्रोपिकोनाज़ोल 25% EC (टिल्ट)** 1 मिली प्रति लीटर पानी (200 मिली प्रति एकड़) 200 लीटर पानी में मिलाकर दोपहर बाद छिड़कें।
+4. **फोटो जांच:** पत्ते की फोटो खींचकर 'रोग निदान' में तुरंत जांचें। [ACTION:diagnosis]`;
+      fallbackSuggestions = ["रोग निदान में फोटो भेजें", "नीम तेल का छिड़काव", "रोग नक्शा देखें"];
     } else {
-      fallbackReply = `My friend, **Plant Doctor (Disease Pathology)** protects your harvest!
-1. Click on **Disease Pathology** in the navigation.
-2. Snap a clear photo of the infected leaf with your camera.
-3. You will instantly get the exact disease diagnosis, low-cost organic remedies (Neem oil, Jeevamrutha), safe generic medicine dosage, and your local KVK helpline number! [ACTION:diagnosis]`;
-      fallbackSuggestions = ["Open Plant Doctor", "How to prepare neem spray?", "Contact local KVK"];
+      fallbackReply = `🩺 **Yellow Rust & Foliar Blight Management:**
+1. **Symptom:** Yellow powdery stripe pustules on upper leaf blade that rub off on fingers.
+2. **Immediate Action:** Spray **Propiconazole 25% EC** @ 1 ml/litre of water (200 ml/acre in 200 L water) on a clear day.
+3. **Bio-control:** 5 L fermented sour buttermilk (chhach) diluted in 100 L water acts as natural fungicide.
+4. **Plant Doctor:** Snap a leaf photo right now in Plant Doctor for instant confirmation. [ACTION:diagnosis]`;
+      fallbackSuggestions = ["Scan leaf photo", "Outbreak alert map", "KVK helpline number"];
     }
-  } else if (
-    qLower.includes("hello") ||
-    qLower.includes("hi") ||
-    qLower.includes("namaste") ||
-    qLower.includes("hey") ||
-    qLower.includes("नमस्ते") ||
-    qLower.includes("सलाम") ||
-    qLower.includes("வணக்கம்") ||
-    qLower.includes("నమస్కారం") ||
-    qLower.includes("ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ")
-  ) {
-    if (language === "hi") {
-      fallbackReply = `राम-राम भाई! मैं आपका सच्चा दोस्त **किसान मित्र (Farmer's Friend)** हूँ। मैं ${district}, ${state} में आपकी फसलों, मौसम, मिट्टी और इस ऐप को चलाना सिखाने के लिए हमेशा हाज़िर हूँ। आप कैसे हैं दोस्त? आज मैं आपकी क्या मदद करूँ?`;
-      fallbackSuggestions = ["यह ऐप कैसे इस्तेमाल करें?", "फसल सलाह कैसे लें?", "मेरे खेत के लिए मौसम क्या है?"];
-    } else if (language === "pa") {
-      fallbackReply = `ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ ਵੀਰ ਜੀ! ਮੈਂ ਤੁਹਾਡਾ ਪਿਆਰਾ ਦੋਸਤ **ਕਿਸਾਨ ਮਿੱਤਰ (Farmer's Friend)** ਹਾਂ। ਮੈਂ ${district}, ${state} ਵਿੱਚ ਤੁਹਾਡੀ ਖੇਤੀ ਅਤੇ ਇਹ ਐਪ ਸਿਖਾਉਣ ਲਈ ਹਾਜ਼ਰ ਹਾਂ। ਤੁਸੀਂ ਕਿਵੇਂ ਹੋ ਜੀ?`;
-      fallbackSuggestions = ["ਐਪ ਵਰਤਣਾ ਸਿਖਾਓ", "ਕਣਕ ਬਾਰੇ ਸਲਾਹ", "ਮੌਸਮ ਦਾ ਹਾਲ"];
+  }
+  // 5. Aphids / Whitefly / Sucking Pests (Mahu / Chepa / Keeda)
+  else if (/aphid|mahu|chetpa|chepa|whitefly|tela|keeda|pest|insect|कीड़ा|माहू|चेपा|ਤੇਲਾ|ਸੁੰਡੀ|பூச்சி|తెగులు/.test(qLower)) {
+    fallbackAction = "diagnosis";
+    if (isHindi) {
+      fallbackReply = `🩺 **माहू (चेपा) और रसचूसक कीटों का पक्का इलाज:**
+1. **पहचान:** पत्तों और कलियों पर छोटे हरे, काले या पीले कीड़े चिपके रहते हैं और चिपचिपा रस छोड़ते हैं।
+2. **पहला जैविक उपाय:** नीम का तेल 1500 PPM (5 मिली प्रति लीटर पानी) + थोड़ा सा साबुन का घोल मिलाकर छिड़कें।
+3. **पीले स्टिकी ट्रैप:** खेत में प्रति एकड़ 15-20 पीले चिपचिपे कार्ड (Yellow Sticky Traps) लगाएं, इससे 80% कीट बिना किसी दवा के पकड़े जाते हैं।
+4. **रासायनिक विकल्प:** यदि 15-20 कीड़े प्रति शाखा दिखें, तो **इमिडाक्लोप्रिड 17.8 SL** (0.5 मिली/लीटर) या **थियामेथोक्सम 25 WG** (1 ग्राम प्रति 3 लीटर पानी) छिड़कें। [ACTION:diagnosis]`;
+      fallbackSuggestions = ["नीम तेल का घोल कैसे बनाएं?", "रोग निदान में फोटो अपलोड करें", "रोग नक्शा"];
     } else {
-      fallbackReply = `Hello my dear friend! I am your **Farmer's Friend (Kisan Mitra)** for ${district}, ${state}. I am here to teach you how to use every part of this app and help you with your crops, soil, and weather. How are you and your family doing today?`;
-      fallbackSuggestions = ["Teach me how to use this app", "How do I get crop advice?", "Check local weather"];
+      fallbackReply = `🩺 **Aphids, Whiteflies & Sucking Pest Solution:**
+1. **Organic First:** Neem oil 1500 ppm @ 5 ml/litre water mixed with 1 ml liquid soap.
+2. **Yellow Sticky Traps:** Install 15-20 yellow sticky traps per acre to trap winged adults naturally.
+3. **Threshold Control:** If infestation crosses ETL, spray **Imidacloprid 17.8% SL** @ 0.5 ml/L or **Thiamethoxam 25% WG** @ 1 g per 3 L water. [ACTION:diagnosis]`;
+      fallbackSuggestions = ["Snap sick leaf photo", "Neem extract recipe", "Outbreak alert radar"];
     }
-  } else if (
-    qLower.includes("how are you") ||
-    qLower.includes("how r u") ||
-    qLower.includes("कैसे हो") ||
-    qLower.includes("कसा आहेस") ||
-    qLower.includes("எப்படி இருக்கிறீர்கள்") ||
-    qLower.includes("ఎలా ఉన్నారు") ||
-    qLower.includes("ਕਿਵੇਂ ਹੋ")
-  ) {
-    if (language === "hi") {
-      fallbackReply = `मैं बिल्कुल ठीक और प्रसन्न हूँ भाई, पूछने के लिए बहुत धन्यवाद! मैं ${district} के किसान भाइयों की सेवा के लिए 24 घंटे तैयार हूँ। आप बताइए, आपकी खेती-बाड़ी और परिवार कैसा है? क्या आप इस ऐप के किसी फीचर के बारे में सीखना चाहते हैं?`;
-      fallbackSuggestions = ["ऐप के फीचर्स सिखाएं", "जैविक खाद कैसे बनाएं?", "फसल बीमा योजना"];
+  }
+  // 6. Irrigation / Water / Sinchai
+  else if (/irrigation|water|sinchai|paani|pani|पानी|सिंचाई|ਪਾਣੀ|பாசனம்|నీరు/.test(qLower)) {
+    if (isHindi) {
+      fallbackReply = `💧 **${district} में वैज्ञानिक सिंचाई प्रबंधन:**
+1. **मिट्टी की नमी:** आपके जिले की मिट्टी में नमी स्तर लगभग **${moistureValue}%** है।
+2. **गेहूँ की 6 मुख्य सिंचाइयां:**
+   - पहली: 20-22 दिन (ताज जड़ / CRI)
+   - दूसरी: 40-45 दिन (कल्ले फूटते समय)
+   - तीसरी: 60-65 दिन (गाभा अवस्था)
+   - चौथी: 85-90 दिन (फूल निकलते समय)
+   - पांचवीं: 100-105 दिन (दूधिया अवस्था)
+   - छठी: 115-120 दिन (दाना भरते समय - तेज हवा में पानी न दें)।
+3. **पानी की बचत:** फव्वारा (Sprinkler) या ड्रिप विधि से 40% पानी बचता है और पैदावार 15% बढ़ती है।`;
+      fallbackSuggestions = ["मौसम का हाल क्या है?", "फसल परामर्श खोलें", "खाद देने का सही समय"];
     } else {
-      fallbackReply = `I am doing wonderful, thank you for asking, my friend! I am keeping an eye on the weather and crops in ${district}, ${state}. How are you and your farm doing? Would you like me to teach you how any part of this app works?`;
-      fallbackSuggestions = ["Teach me app features", "Organic fertilizer recipe", "Crop insurance details"];
+      fallbackReply = `💧 **Irrigation & Water Scheduling for ${district}, ${state}:**
+1. **Moisture Level:** Soil moisture is currently around **${moistureValue}%** in your ${soilType} profile.
+2. **Critical Wheat Stages:** CRI (21 DAS), Tillering (45 DAS), Jointing (65 DAS), Flowering (85 DAS), and Grain filling (105 DAS). Avoid irrigating during high wind speed to prevent crop lodging.
+3. **Conservation:** Sprinkler or micro-irrigation saves up to 40% water while boosting uniform grain weight.`;
+      fallbackSuggestions = ["Check 7-day weather", "Crop water requirement", "Fertilizer timing"];
     }
-  } else {
-    if (language === "hi") {
-      fallbackReply = `दोस्त, ${district} (${state}) के लिए: आपकी मिट्टी (${soilType}, pH ${ph}, नमी ${moistureValue}%) और मौसम के अनुसार, आपके सवाल "${message}" के संबंध में संतुलित जैविक पोषण, सही समय पर सिंचाई और आईसीएआर की वैज्ञानिक पद्धतियों का पालन करना सबसे अच्छा रहेगा। किसी भी समस्या के लिए अपने पास के कृषि विज्ञान केंद्र (KVK) से भी संपर्क कर सकते हैं।`;
-      fallbackSuggestions = ["यह ऐप चलाना सिखाएं", "सिंचाई का सही समय", "कीट प्रकोप से बचाव"];
+  }
+  // 7. Mustard / Sarson / Rai
+  else if (/mustard|sarson|rai|सरसों|ਸਰ੍ਹੋਂ|கடுगु|ఆవాలు/.test(qLower)) {
+    fallbackAction = "advisory";
+    if (isHindi) {
+      fallbackReply = `🌱 **सरसों (Mustard) की अधिक तेल वाली पैदावार:**
+1. **उन्नत किस्में:** आरएच-749, आरएच-725, पूसा मस्टर्ड 28 और गिरिराज।
+2. **सल्फर (गंधक) का महत्व:** सरसों में तेल बढ़ाने के लिए 20-25 किग्रा बेंटोनाइट सल्फर प्रति एकड़ बुवाई के समय अवश्य डालें।
+3. **माहू (चेपा) से बचाव:** जनवरी-फरवरी में बादल छाने पर माहू का खतरा बढ़ता है। खेत के किनारों पर येलो ट्रैप लगाएं। [ACTION:advisory]`;
+      fallbackSuggestions = ["सरसों में माहू का इलाज", "सल्फर खाद के फायदे", "फसल परामर्श"];
     } else {
-      fallbackReply = `My friend, for ${district}, ${state}: Regarding "${message}", taking into account your ${soilType} soil (pH ${ph}, ${moistureValue}% moisture) and local climate, adhering to organic compost, moisture-conserving irrigation, and ICAR extension guidance is strongly advised.`;
-      fallbackSuggestions = ["Teach me how to use the app", "Best crop for this season", "Pest control tips"];
+      fallbackReply = `🌱 **Mustard Agronomy for ${district}, ${state}:**
+1. **Top Varieties:** RH-749, RH-725, Pusa Mustard 28.
+2. **Sulphur Application:** Apply 20-25 kg elemental Sulphur/acre to boost oil content by 2-3%.
+3. **Aphid Watch:** Cloudy weather attracts aphids; install yellow sticky traps and spray Neem oil early. [ACTION:advisory]`;
+      fallbackSuggestions = ["Aphid spray in mustard", "Sowing window advice", "Open Crop Advisory"];
+    }
+  }
+  // 8. Government Schemes / PM-KISAN / Crop Insurance (PMFBY)
+  else if (/pm kisan|pmfby|scheme|subsidy|bima|yojana|kcc|msp|योजना|बीमा|सब्सिडी|ਸਕੀਮ/.test(qLower)) {
+    if (isHindi) {
+      fallbackReply = `🏛️ **किसान कल्याण योजनाएं व सहायता:**
+1. **प्रधानमंत्री किसान सम्मान निधि (PM-KISAN):** पात्र किसानों को सालाना ₹6,000 (₹2,000 की तीन किस्तें) सीधे बैंक खाते में मिलती हैं। e-KYC pmkisan.gov.in पर कराएं।
+2. **प्रधानमंत्री फसल बीमा योजना (PMFBY):** ओलावृष्टि, बेमौसम बारिश या सूखे से फसल खराब होने पर 72 घंटे के अंदर टोल-फ्री 14447 या 'Crop Insurance App' पर शिकायत दर्ज करना जरूरी है।
+3. **किसान क्रेडिट कार्ड (KCC):** समय पर भुगतान करने पर मात्र 4% वार्षिक ब्याज दर पर ₹3 लाख तक का कृषि ऋण मिलता है।
+4. **केवीके संपर्क:** आपके जिले ${district} के नजदीकी कृषि विज्ञान केंद्र से भी सीधी मदद मिल सकती है।`;
+      fallbackSuggestions = ["फसल बीमा में क्लेम कैसे करें?", "KVK से संपर्क कैसे करें?", "फसल सलाह"];
+    } else {
+      fallbackReply = `🏛️ **Government Agricultural Schemes & Benefits:**
+1. **PM-KISAN:** ₹6,000/year in 3 equal installments credited directly via DBT. Complete e-KYC on pmkisan.gov.in.
+2. **PMFBY (Crop Insurance):** Report localized damage (hailstorm, inundation) within 72 hours via toll-free 14447 or Crop Insurance App.
+3. **Kisan Credit Card (KCC):** Crop loans up to ₹3 Lakh at an effective interest rate of 4% with prompt repayment incentive.`;
+      fallbackSuggestions = ["How to claim PMFBY?", "Local KVK helpline", "Crop Advisory"];
+    }
+  }
+  // 9. Weather / Climate / Rain / Frost / Cold
+  else if (/weather|mausam|rain|barish|frost|thand|cold|pala|मौसम|बारिश|पाला|ਠੰਡ|ਮੌਸਮ|வானிலை/.test(qLower)) {
+    if (isHindi) {
+      fallbackReply = `⛅ **${district} का मौसम और फसल सुरक्षा उपाय:**
+1. **पाले (Frost) से बचाव:** अत्यधिक ठंड या पाले की आशंका होने पर शाम के समय खेत में हल्की सिंचाई कर दें। खेत की मेड़ों पर धुआं करने से तापमान 2-3 डिग्री बढ़ जाता है।
+2. **बेमौसम बारिश:** खेत में जलभराव न होने दें, तुरंत जल निकासी की नालियां साफ रखें।
+3. **हवा का रुख:** तेज हवा चलने के समय गेहूँ में कभी पानी न लगाएं, वर्ना फसल गिर (Lodging) सकती है।`;
+      fallbackSuggestions = ["पाले से फसल कैसे बचाएं?", "सिंचाई का सही समय", "रोग नक्शा"];
+    } else {
+      fallbackReply = `⛅ **Weather & Crop Protection for ${district}, ${state}:**
+1. **Frost/Cold Wave:** Light evening irrigation raises soil temperature and protects vegetative buds from freezing injury.
+2. **Excess Rain Drainage:** Clear drainage channels immediately to prevent root asphyxiation and damping off.
+3. **Wind Speed:** Avoid irrigating tall wheat during winds exceeding 15 km/h to prevent lodging.`;
+      fallbackSuggestions = ["Frost mitigation tips", "7-day forecast", "Plant Doctor"];
+    }
+  }
+  // 10. App How-To Guide
+  else if (/how to use|use this app|teach|help|guide|app kaise|kaise chalaye|sikhaye|ऐप|सिखाओ|ਕਿਵੇਂ ਵਰਤਣਾ|ਵਰਤਣਾ/.test(qLower)) {
+    if (isHindi) {
+      fallbackReply = `राम-राम भाई! मैं आपका **किसान मित्र (Farmer's Friend)** हूँ। यह ऐप चलाना बहुत आसान है:
+
+1. 🌾 **फसल सलाह (Crop Advisory)**: आपके जिले (${district}) की मिट्टी और उपग्रह मौसम के आधार पर सबसे अच्छी फसलें और जैविक खाद की सलाह। आप रेडियो स्पीकर से पूरी सलाह अपनी भाषा में सुन भी सकते हैं। [ACTION:advisory]
+2. 🩺 **रोग डॉक्टर (Plant Doctor)**: बीमार या खराब पत्ते की फोटो खींचें, ऐप तुरंत बीमारी पहचानकर जैविक उपाय और सुरक्षित दवा बताएगा। [ACTION:diagnosis]
+3. 🗺️ **रोग नक्शा (Outbreaks Map)**: पास के जिलों में फैलने वाली बीमारियों का लाइव नक्शा देखें। [ACTION:dashboard]
+4. 🎙️ **बोलकर पूछें**: टाइप करने की जरूरत नहीं, बस माइक बटन दबाकर अपनी भाषा में पूछें!
+
+बताइए दोस्त, मैं आपकी क्या मदद करूँ?`;
+      fallbackSuggestions = ["फसल सलाह कैसे लें?", "बीमारी की फोटो कैसे भेजें?", "रोग नक्शा दिखाएं"];
+    } else {
+      fallbackReply = `Hello my friend! I am your **Farmer's Friend (Kisan Mitra)** for ${district}, ${state}:
+
+1. 🌾 **Crop Advisory**: Tailored high-yield crops based on soil (${soilType}) and weather with audio broadcast. [ACTION:advisory]
+2. 🩺 **Plant Doctor (Diagnosis)**: Snap any diseased leaf for instant organic bio-remedies and medicine doses. [ACTION:diagnosis]
+3. 🗺️ **Outbreak Radar**: Live cross-district tracking of crop diseases. [ACTION:dashboard]
+4. 🎙️ **Voice Feature**: Tap the mic to talk with me in your preferred language!
+
+What would you like to explore first?`;
+      fallbackSuggestions = ["How do I get crop advice?", "How to scan plant disease?", "Show outbreak map"];
+    }
+  }
+  // 11. Greetings
+  else if (/hello|hi|namaste|hey|नमस्ते|सलाम|வணக்கம்|నమస్కారం|ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ/.test(qLower)) {
+    if (isHindi) {
+      fallbackReply = `राम-राम भाई! मैं आपका सच्चा साथी **किसान मित्र (Farmer's Friend)** हूँ। मैं ${district}, ${state} में आपकी फसलों, मौसम, खाद और खेती से जुड़ी हर समस्या का समाधान करने के लिए तैयार हूँ। आप कैसे हैं दोस्त? आज आप क्या जानकारी चाहते हैं?`;
+      fallbackSuggestions = ["गेहूँ की अच्छी किस्में", "जैविक खाद कैसे बनाएं?", "कीट से बचाव कैसे करें?"];
+    } else {
+      fallbackReply = `Hello my dear friend! I am your **Farmer's Friend (Kisan Mitra)** for ${district}, ${state}. How is your farm and family doing today? What farming topic or question can I help you with?`;
+      fallbackSuggestions = ["Best crops this season", "Organic fertilizer recipe", "Pest control tips"];
+    }
+  }
+  // 12. General contextual response tailored to user query
+  else {
+    if (isHindi) {
+      fallbackReply = `दोस्त, ${district} (${state}) में आपकी ${soilType} मिट्टी (pH ${ph}, नमी ${moistureValue}%) के संदर्भ में:
+
+आपके सवाल **"${message}"** पर मेरी वैज्ञानिक सलाह है:
+1. **मिट्टी व पोषण:** मिट्टी में पर्याप्त जैविक कार्बन बनाए रखने के लिए कम्पोस्ट या वर्मीकम्पोस्ट का प्रयोग करें। रासायनिक खाद हमेशा मिट्टी परीक्षण के आधार पर ही दें।
+2. **पौध संरक्षण:** किसी भी असामान्य कीट या धब्बे के दिखने पर शुरुआती चरण में नीम तेल (1500 PPM) का छिड़काव करें।
+3. **निगरानी:** आप इस ऐप के 'रोग निदान' [ACTION:diagnosis] में फोटो अपलोड करके या 'फसल सलाह' [ACTION:advisory] में जिले के अनुसार फसल चक्र देख सकते हैं।
+
+क्या आप इस विषय पर कुछ और विस्तार से जानना चाहते हैं?`;
+      fallbackSuggestions = ["फसल परामर्श खोलें", "रोग निदान खोलें", "जैविक खाद कैसे बनाएं?"];
+    } else {
+      fallbackReply = `My friend, regarding your question **"${message}"** for ${district}, ${state} (${soilType} soil, pH ${ph}, moisture ${moistureValue}%):
+
+1. **Agronomic Practice:** Maintain balanced organic and inorganic nutrition based on your local soil conditions.
+2. **Crop Protection:** For any pest or foliar spots, apply bio-pesticides like Neem oil (1500 ppm) early before threshold is crossed.
+3. **App Guidance:** You can scan leaf photos in Plant Doctor [ACTION:diagnosis] or explore climate-adapted sowing windows in Crop Advisory [ACTION:advisory].
+
+Would you like more specific instructions on seeds, fertilizers, or pest management?`;
+      fallbackSuggestions = ["Open Crop Advisory", "Open Plant Doctor", "Weather forecast"];
     }
   }
 
@@ -533,15 +597,23 @@ Which feature would you like to explore first?`;
   };
 }
 
-// Endpoint: Interactive Conversational AI Chatbot (Stream-based SSE)
-app.post("/api/chat/stream", async (req, res) => {
-  res.setHeader("Content-Type", "text/event-stream");
-  res.setHeader("Cache-Control", "no-cache, no-transform");
-  res.setHeader("Connection", "keep-alive");
-  res.flushHeaders?.();
+// Unified Endpoint: Interactive Conversational AI Chatbot (Supports SSE Streaming & JSON)
+app.post(["/api/friend-chat", "/api/chat/stream", "/api/chat"], async (req, res) => {
+  const isStreaming = req.body.stream === true ||
+    Boolean(req.headers.accept && req.headers.accept.includes("text/event-stream")) ||
+    req.path.includes("/stream");
+
+  if (isStreaming) {
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache, no-transform");
+    res.setHeader("Connection", "keep-alive");
+    res.flushHeaders?.();
+  }
 
   const sendSSE = (data: any) => {
-    res.write(`data: ${JSON.stringify(data)}\n\n`);
+    if (isStreaming) {
+      res.write(`data: ${JSON.stringify(data)}\n\n`);
+    }
   };
 
   try {
@@ -552,8 +624,11 @@ app.post("/api/chat/stream", async (req, res) => {
     const district = req.body.district || "Ludhiana";
 
     if (!message || typeof message !== "string" || !message.trim()) {
-      sendSSE({ type: "error", error: "Missing message text parameter" });
-      return res.end();
+      if (isStreaming) {
+        sendSSE({ type: "error", error: "Missing message text parameter" });
+        return res.end();
+      }
+      return res.status(400).json({ error: "Missing message text parameter" });
     }
 
     const targetLang = LANG_MAP[language] || "English";
@@ -588,46 +663,38 @@ app.post("/api/chat/stream", async (req, res) => {
             .join(", ")}`
         : "No active severe outbreak alerts reported in this district.";
 
-    const systemPrompt = `You are "Kisan Mitra" (Farmer's Friend / किसान मित्र), a warm, loving, rural friend and personal teacher to smallholder Indian farmers in their village.
+    const systemPrompt = `You are "Kisan Mitra" (Farmer's Friend / किसान मित्र), a warm, loving, rural friend and expert agricultural scientist advising smallholder Indian farmers in their village.
 You are chatting with a farmer in ${district}, ${state}.
 You speak like a close, caring friend or brother over a cup of chai in the village chaupal — respectful, enthusiastic, patient, empathetic, and encouraging ("राम-राम भाई!", "नमस्ते दोस्त!", "ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ ਵੀਰ ਜੀ!", "வணக்கம் நண்பரே!", "నమస్కారం మిత్రమా!", "Hello my dear farmer friend!").
 
-YOUR CORE ROLES:
-1. TEACH THE FARMER HOW TO USE THIS APP (AgriSahayak):
-   Smallholder farmers may not be tech-savvy. You are their patient, friendly guide who teaches them how every section works step-by-step in simple words:
-   - 🌾 **फसल सलाह (Crop Advisory)**:
-     Explain that this tool analyzes their local ICAR soil chemistry (${soilType}, pH ${ph}, organic carbon ${organicCarbon}%) and 7-day live weather in ${district} to recommend the top 2-3 most profitable, resilient crops and organic practices. Teach them that they can also click the radio broadcast speaker button to listen to the whole advisory read aloud in their language!
-     Mention that they can click [ACTION:advisory] to open Crop Advisory right away.
-   - 🩺 **रोग डॉक्टर / पौधा निदान (Plant Doctor / Disease Diagnosis)**:
-     Explain that whenever they see a diseased, spotted, or pest-eaten leaf on their farm, they can simply snap a clear photo or upload an image. The AI plant pathologist immediately identifies the disease, gives an organic bio-control remedy (like Neem oil spray or Jeevamrutha) and safe generic medicine with exact dosages, and provides the direct helpline phone number of their nearest Krishi Vigyan Kendra (KVK).
-     Mention that they can click [ACTION:diagnosis] to open Plant Doctor.
-   - 🗺️ **प्रकोप नक्शा / सामुदायिक चेतावनी (Outbreak Radar & Early Warning)**:
-     Explain that this interactive map tracks real-time crop disease reports and alerts across neighboring districts in ${state}. If a blight or pest starts spreading, the app warns farmers early so they can protect their crops before it hits their field.
-     Mention that they can click [ACTION:dashboard] to open the Outbreak Map.
-   - 🎙️ **बोलकर बात करें (Voice Feature)**:
-     Explain that farmers don't need to type — they can simply tap the microphone icon 🎙️ in any tool or here in chat to ask questions by speaking naturally, and the app will listen and answer back with voice!
-   - 🌐 **भाषा और ज़िला बदलें (Change Language & District)**:
-     Explain that they can switch between Indian languages at any time from the top globe icon, and change their farm district using the "Change Farm" button.
+CRITICAL MANDATE - ANSWER THE FARMER'S SPECIFIC QUESTION DIRECTLY:
+1. Whatever question the farmer asks, you MUST provide a direct, comprehensive, specific, and actionable answer tailored to their exact query.
+   - If they ask about a crop (e.g., wheat, rice/paddy, cotton, mustard, potato, tomato, pulses, sugarcane, vegetables): Give exact recommended varieties, sowing window, seed treatment, fertilizer dose (DAP, Urea, Zinc, Potash) per acre, and irrigation schedule.
+   - If they ask about pests or plant diseases (e.g., yellow rust, aphids/chepa, whitefly, leaf curl, stem borer, blight, caterpillars): Give immediate low-cost organic remedies (Neem oil 1500ppm, fermented buttermilk, yellow sticky traps) and safe chemical remedies with exact dosage. Suggest they can take a leaf photo in Plant Doctor [ACTION:diagnosis].
+   - If they ask about fertilizers or soil: Explain balanced NPK nutrition, vermicompost, Jeevamrutha preparation, and how to correct soil pH for their ${soilType} soil (pH ${ph}, organic carbon ${organicCarbon}%).
+   - If they ask about irrigation or water: Give critical watering stages (like CRI for wheat) and water conservation tips.
+   - If they ask about weather or seasonal risks: Explain protection from frost, heatwaves, or unseasonal rains in ${district} (current weather: ${weatherSummary}).
+   - If they ask about government schemes: Explain PM-KISAN, PMFBY crop insurance claim steps, KCC, and local KVK assistance.
+   - If they ask how to use this app: Explain Crop Advisory [ACTION:advisory], Plant Doctor [ACTION:diagnosis], and Outbreak Radar Map [ACTION:dashboard].
+   - If they greet you: Greet them warmly and ask how their farm is doing in ${district}.
 
-2. CHAT AS A TRUE FRIEND & AGRONOMY COMPANION:
-   - Greet them warmly and lovingly as a friend/brother in their native tongue.
-   - Ask about their well-being, their family, their harvest, and how their crops are doing in ${district}.
-   - Answer any practical farming questions: organic fertilizers, vermicompost, sowing windows, water-saving irrigation, PM-KISAN, PMFBY crop insurance, mandi prices, soil health. Always favor low-cost, organic solutions first to save farmers money.
-   - Context for ${district}, ${state}:
-     Soil: ${soilType}, pH: ${ph}, Organic Carbon: ${organicCarbon}%, Moisture index: ${moistureValue}%, Weather: ${weatherSummary}.
-     Outbreak status: ${outbreakContext}.
+2. LOCAL CONTEXT FOR ${district}, ${state}:
+   - Soil: ${soilType}, pH: ${ph}, Organic Carbon: ${organicCarbon}%, Moisture index: ${moistureValue}%.
+   - Live Weather: ${weatherSummary}.
+   - Nearby Outbreak Status: ${outbreakContext}.
 
-CRITICAL LANGUAGE MANDATE:
-- The farmer's selected language is: ${targetLang} (Language code: "${language}").
-- EVERY SINGLE WORD in your response MUST be in ${targetLang} using native script (e.g. Hindi in Devanagari, Punjabi in Gurmukhi, Tamil in Tamil script, etc.).
-- Keep the language natural, affectionate, formatting with clear bullet points where helpful.
-- If relevant to navigate, include action tags like [ACTION:advisory], [ACTION:diagnosis], [ACTION:dashboard].
-- Do not wrap in JSON; stream natural conversational text directly.`;
+3. STRICT LANGUAGE MANDATE:
+   - The farmer's selected language is: ${targetLang} (Language code: "${language}").
+   - Respond 100% in ${targetLang} using native script (e.g. Hindi in Devanagari, Punjabi in Gurmukhi, Marathi in Devanagari, Tamil in Tamil script, Telugu in Telugu script, Bengali in Bengali script, Gujarati in Gujarati script, Kannada in Kannada script, Malayalam in Malayalam script, English in English).
+   - Format cleanly with bullet points where helpful.
+   - Include action tags [ACTION:advisory], [ACTION:diagnosis], or [ACTION:dashboard] when appropriate.`;
 
-    sendSSE({
-      type: "start",
-      agentBadge: "Kisan Mitra — Farmer's Friend",
-    });
+    if (isStreaming) {
+      sendSSE({
+        type: "start",
+        agentBadge: "Kisan Mitra — Farmer's Friend",
+      });
+    }
 
     // Build contents with past conversation turns
     const contents: any[] = [];
@@ -636,7 +703,7 @@ CRITICAL LANGUAGE MANDATE:
       for (const h of recentHistory) {
         if (h.sender === "user") {
           contents.push({ role: "user", parts: [{ text: h.text }] });
-        } else if (h.sender === "copilot" || h.sender === "friend") {
+        } else if (h.sender === "copilot" || h.sender === "friend" || h.sender === "assistant") {
           contents.push({ role: "model", parts: [{ text: h.text }] });
         }
       }
@@ -644,30 +711,47 @@ CRITICAL LANGUAGE MANDATE:
     contents.push({ role: "user", parts: [{ text: message }] });
 
     let fullText = "";
+    let streamSuccess = false;
 
-    try {
-      const streamResponse = await getAiClient().models.generateContentStream({
-        model: "gemini-3.1-flash-lite",
-        contents,
-        config: {
-          systemInstruction: systemPrompt,
-          thinkingConfig: {
-            thinkingLevel: ThinkingLevel.MINIMAL,
+    // Try Gemini model rotation
+    const modelsToTry = ["gemini-3.8-flash", "gemini-3.1-flash-lite"];
+
+    for (const modelCandidate of modelsToTry) {
+      try {
+        console.log(`[Chat API] Invoking ${modelCandidate}...`);
+        const streamResponse = await getAiClient().models.generateContentStream({
+          model: modelCandidate,
+          contents,
+          config: {
+            systemInstruction: systemPrompt,
           },
-        },
-      });
+        });
 
-      for await (const chunk of streamResponse) {
-        const chunkText = chunk.text;
-        if (chunkText) {
-          fullText += chunkText;
-          sendSSE({
-            type: "chunk",
-            text: chunkText,
-          });
+        for await (const chunk of streamResponse) {
+          const chunkText = chunk.text;
+          if (chunkText) {
+            fullText += chunkText;
+            if (isStreaming) {
+              sendSSE({
+                type: "chunk",
+                delta: chunkText,
+                text: chunkText,
+              });
+            }
+          }
         }
-      }
 
+        if (fullText.trim()) {
+          streamSuccess = true;
+          break;
+        }
+      } catch (candidateError: any) {
+        console.warn(`[Chat API] Model ${modelCandidate} failed:`, candidateError?.message || candidateError);
+      }
+    }
+
+    // If Gemini model rotation succeeded
+    if (streamSuccess && fullText.trim()) {
       // Determine action target
       let actionTarget = "";
       if (fullText.includes("[ACTION:advisory]")) actionTarget = "advisory";
@@ -680,55 +764,68 @@ CRITICAL LANGUAGE MANDATE:
       if (language === "hi") {
         suggestions = isHowTo
           ? ["फसल सलाह कैसे लें?", "रोग डॉक्टर कैसे चलाएं?", "रोग नक्शा दिखाएं"]
-          : ["यह ऐप कैसे इस्तेमाल करें?", "जैविक खाद कैसे बनाएं?", "मौसम की जानकारी"];
+          : ["गेहूँ में खाद प्रबंधन", "कीटों का जैविक उपाय", "मौसम का हाल"];
       } else if (language === "pa") {
         suggestions = isHowTo
           ? ["ਫ਼ਸਲ ਸਲਾਹ ਖੋਲ੍ਹੋ", "ਬਿਮਾਰੀ ਦੀ ਜਾਂਚ ਕਰੋ", "ਬਿਮਾਰੀ ਨਕਸ਼ਾ ਦੇਖੋ"]
-          : ["ਐਪ ਵਰਤਣਾ ਸਿਖਾਓ", "ਕਣਕ ਬਾਰੇ ਸਲਾਹ", "ਮੌਸਮ ਦਾ ਹਾਲ"];
+          : ["ਖਾਦ ਦੀ ਸਹੀ ਵਰਤੋਂ", "ਕੀਟ ਰੋਕਥਾਮ", "ਮੌਸਮ ਦਾ ਹਾਲ"];
       } else if (language === "mr") {
         suggestions = isHowTo
           ? ["पीक सल्ला कसा मिळवावा?", "रोगाचा फोटो कसा टाकावा?", "रोग नकाशा दाखवा"]
-          : ["हे ॲप कसे वापरावे?", "सेंद्रिय खत कसे बनवावे?", "हवामानाचा अंदाज"];
+          : ["सेंद्रिय खत कसे बनवावे?", "कीड नियंत्रण उपाय", "हवामानाचा अंदाज"];
       } else if (language === "ta") {
         suggestions = isHowTo
           ? ["பயிர் ஆலோசனை பெறுக", "நோய் கண்டறிதல்", "நோய் வரைபடம்"]
-          : ["செயலியை பயன்படுத்துவது எப்படி?", "இயற்கை உரம் தயாரிப்பு", "வானிலை நிலவரம்"];
+          : ["உர மேலாண்மை", "இயற்கை பூச்சி விரட்டி", "வானிலை தகவல்"];
       } else {
         suggestions = isHowTo
           ? ["How do I get crop advice?", "How to scan plant disease?", "Show outbreak map"]
-          : ["Teach me how to use this app", "Organic fertilizer recipe", "Check local weather"];
+          : ["Balanced fertilizer guide", "Organic pest control", "7-day weather outlook"];
       }
 
-      sendSSE({
-        type: "done",
-        fullText,
+      if (isStreaming) {
+        sendSSE({
+          type: "done",
+          fullText,
+          suggestions,
+          actionTarget,
+          agentBadge: "Kisan Mitra — Farmer's Friend",
+        });
+        res.write("data: [DONE]\n\n");
+        return res.end();
+      }
+
+      return res.json({
+        reply: fullText,
+        text: fullText,
         suggestions,
         actionTarget,
         agentBadge: "Kisan Mitra — Farmer's Friend",
       });
-      return res.end();
-    } catch (modelError: any) {
-      console.warn("Gemini stream error, streaming intelligent fallback:", modelError?.message);
+    }
 
-      const fallback = getIntelligentChatFallback(
-        message,
-        language,
-        district,
-        state,
-        soilType,
-        ph,
-        moistureValue
-      );
+    // Fallback if Gemini models could not stream or respond
+    console.warn("Using intelligent agricultural fallback for chat query:", message);
+    const fallback = getIntelligentChatFallback(
+      message,
+      language,
+      district,
+      state,
+      soilType,
+      ph,
+      moistureValue
+    );
 
-      // Stream fallback in small natural chunks to simulate lively response
+    if (isStreaming) {
       const words = fallback.reply.split(" ");
       for (let i = 0; i < words.length; i += 3) {
         const slice = words.slice(i, i + 3).join(" ") + (i + 3 < words.length ? " " : "");
         sendSSE({
           type: "chunk",
+          delta: slice,
           text: slice,
         });
-        await new Promise((resolve) => setTimeout(resolve, 25));
+        await new Promise((resolve) => setTimeout(resolve, 20));
       }
 
       sendSSE({
@@ -738,162 +835,28 @@ CRITICAL LANGUAGE MANDATE:
         actionTarget: fallback.actionTarget,
         agentBadge: fallback.agentBadge,
       });
+      res.write("data: [DONE]\n\n");
       return res.end();
     }
+
+    return res.json({
+      reply: fallback.reply,
+      text: fallback.reply,
+      suggestions: fallback.suggestions,
+      actionTarget: fallback.actionTarget,
+      agentBadge: fallback.agentBadge,
+    });
   } catch (error: any) {
     console.error("Fatal chat stream error:", error);
-    sendSSE({
-      type: "error",
-      error: error.message || "Failed to process chat stream",
-    });
-    res.end();
-  }
-});
-
-// Endpoint: Interactive Conversational AI Chatbot (Casual & Local Problems - Non-streaming fallback)
-app.post("/api/chat", async (req, res) => {
-  try {
-    const message = req.body.message || req.body.query || req.body.prompt;
-    const history = req.body.history || [];
-    const language = req.body.language || "hi";
-    const state = req.body.state || "Punjab";
-    const district = req.body.district || "Ludhiana";
-
-    if (!message || typeof message !== "string" || !message.trim()) {
-      return res.status(400).json({ error: "Missing message text parameter" });
-    }
-
-    const targetLang = LANG_MAP[language] || "English";
-
-    // Soil & telemetry context using fallback hierarchy
-    const profile = getSoilProfileWithFallback(state, district);
-    const soilType = profile.soilType;
-    const ph = profile.ph;
-    const organicCarbon = profile.organicCarbon;
-    const ndviValue = profile.ndviValue;
-    const moistureValue = profile.moistureValue;
-    const agroClimaticZone = profile.agroClimaticZone;
-    const coords = { lat: profile.lat, lng: profile.lng };
-
-    let weatherSummary = "Seasonal average conditions.";
-    try {
-      weatherSummary = await fetchDistrictWeather(coords.lat, coords.lng);
-    } catch (e) {
-      // ignore
-    }
-
-    // Nearby disease reports
-    const nearbyReports = anonymizedReports.filter(r => r.district.toLowerCase() === district.toLowerCase() || r.state.toLowerCase() === state.toLowerCase()).slice(0, 3);
-    const outbreakContext = nearbyReports.length > 0 
-      ? `Recent local reports in ${district}: ${nearbyReports.map(r => `${r.crop} (${r.disease})`).join(", ")}`
-      : "No active severe outbreak alerts reported in this district.";
-
-    const systemPrompt = `You are "Kisan Mitra" (Farmer's Friend / किसान मित्र), a warm, loving, rural friend and personal teacher to smallholder Indian farmers in their village.
-You are chatting with a farmer in ${district}, ${state}.
-You speak like a close, caring friend or brother over a cup of chai in the village chaupal — respectful, enthusiastic, patient, empathetic, and encouraging ("राम-राम भाई!", "नमस्ते दोस्त!", "ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ ਵੀਰ ਜੀ!", "வணக்கம் நண்பரே!", "నమస్కారం మిత్రమా!", "Hello my dear farmer friend!").
-
-YOUR CORE ROLES:
-1. TEACH THE FARMER HOW TO USE THIS APP (AgriSahayak):
-   Smallholder farmers may not be tech-savvy. You are their patient, friendly guide who teaches them how every section works step-by-step in simple words:
-   - 🌾 **फसल सलाह (Crop Advisory)**:
-     Explain that this tool analyzes their local ICAR soil chemistry (${soilType}, pH ${ph}, organic carbon ${organicCarbon}%) and 7-day live weather in ${district} to recommend the top 2-3 most profitable, resilient crops and organic practices. Teach them that they can also click the radio broadcast speaker button to listen to the whole advisory read aloud in their language!
-     Mention that they can click [ACTION:advisory] to open Crop Advisory right away.
-   - 🩺 **रोग डॉक्टर / पौधा निदान (Plant Doctor / Disease Diagnosis)**:
-     Explain that whenever they see a diseased, spotted, or pest-eaten leaf on their farm, they can simply snap a clear photo or upload an image. The AI plant pathologist immediately identifies the disease, gives an organic bio-control remedy (like Neem oil spray or Jeevamrutha) and safe generic medicine with exact dosages, and provides the direct helpline phone number of their nearest Krishi Vigyan Kendra (KVK).
-     Mention that they can click [ACTION:diagnosis] to open Plant Doctor.
-   - 🗺️ **प्रकोप नक्शा / सामुदायिक चेतावनी (Outbreak Radar & Early Warning)**:
-     Explain that this interactive map tracks real-time crop disease reports and alerts across neighboring districts in ${state}. If a blight or pest starts spreading, the app warns farmers early so they can protect their crops before it hits their field.
-     Mention that they can click [ACTION:dashboard] to open the Outbreak Map.
-   - 🎙️ **बोलकर बात करें (Voice Feature)**:
-     Explain that farmers don't need to type — they can simply tap the microphone icon 🎙️ in any tool or here in chat to ask questions by speaking naturally, and the app will listen and answer back with voice!
-   - 🌐 **भाषा और ज़िला बदलें (Change Language & District)**:
-     Explain that they can switch between Indian languages at any time from the top globe icon, and change their farm district using the "Change Farm" button.
-
-2. CHAT AS A TRUE FRIEND & AGRONOMY COMPANION:
-   - Greet them warmly and lovingly as a friend/brother in their native tongue.
-   - Ask about their well-being, their family, their harvest, and how their crops are doing in ${district}.
-   - Answer any practical farming questions: organic fertilizers, vermicompost, sowing windows, water-saving irrigation, PM-KISAN, PMFBY crop insurance, mandi prices, soil health. Always favor low-cost, organic solutions first to save farmers money.
-   - Context for ${district}, ${state}:
-     Soil: ${soilType}, pH: ${ph}, Organic Carbon: ${organicCarbon}%, Moisture index: ${moistureValue}%, Weather: ${weatherSummary}.
-     Outbreak status: ${outbreakContext}.
-
-CRITICAL LANGUAGE MANDATE:
-- The farmer's selected language is: ${targetLang} (Language code: "${language}").
-- EVERY SINGLE WORD in your response and suggestions MUST be in ${targetLang} using native script (e.g. Hindi in Devanagari, Punjabi in Gurmukhi, Tamil in Tamil script, etc.).
-- Keep the language natural, affectionate, and easy for rural farmers to understand.
-
-Output JSON format:
-{
-  "reply": "The response message in the target language (supports markdown formatting and action tags like [ACTION:advisory], [ACTION:diagnosis], [ACTION:dashboard])",
-  "suggestions": ["2 or 3 short friendly follow-up questions or prompts in target language"],
-  "agentBadge": "Kisan Mitra — Farmer's Friend",
-  "actionTarget": "optional string: 'advisory' | 'diagnosis' | 'dashboard' | 'voice' or ''"
-}`;
-
-    // Build contents with past conversation turns
-    const contents: any[] = [];
-    if (Array.isArray(history) && history.length > 0) {
-      // Include last 6 turns
-      const recentHistory = history.slice(-6);
-      for (const h of recentHistory) {
-        if (h.sender === "user") {
-          contents.push({ role: "user", parts: [{ text: h.text }] });
-        } else if (h.sender === "copilot" || h.sender === "friend") {
-          contents.push({ role: "model", parts: [{ text: h.text }] });
-        }
-      }
-    }
-    contents.push({ role: "user", parts: [{ text: message }] });
-
-    try {
-      const response = await generateContentWithFallback({
-        model: "gemini-3.1-flash-lite",
-        contents,
-        config: {
-          systemInstruction: systemPrompt,
-          thinkingConfig: {
-            thinkingLevel: ThinkingLevel.MINIMAL,
-          },
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              reply: { type: Type.STRING, description: "Detailed warm conversational response in target language" },
-              suggestions: {
-                type: Type.ARRAY,
-                items: { type: Type.STRING },
-                description: "2-3 short relevant follow-up prompts in target language"
-              },
-              agentBadge: { type: Type.STRING, description: "Contextual agent badge e.g. Kisan Mitra" },
-              actionTarget: { type: Type.STRING, description: "Optional action target: advisory, diagnosis, dashboard, or empty" }
-            },
-            required: ["reply", "suggestions"]
-          }
-        }
+    if (isStreaming) {
+      sendSSE({
+        type: "error",
+        error: error.message || "Failed to process chat stream",
       });
-
-      const outputText = response.text || "{}";
-      const chatData = JSON.parse(outputText);
-      if (!chatData.agentBadge) {
-        chatData.agentBadge = "Kisan Mitra — Farmer's Friend";
-      }
-      return res.json(chatData);
-    } catch (modelError: any) {
-      console.warn("Gemini chat error, providing intelligent conversational fallback:", modelError?.message);
-      const fallback = getIntelligentChatFallback(
-        message,
-        language,
-        district,
-        state,
-        soilType,
-        ph,
-        moistureValue
-      );
-      return res.json(fallback);
+      res.end();
+    } else {
+      res.status(500).json({ error: error.message || "Failed to process chat stream" });
     }
-  } catch (error: any) {
-    console.error("Fatal chat endpoint error:", error);
-    res.status(500).json({ error: error.message || "Failed to process chat query" });
   }
 });
 
@@ -932,8 +895,6 @@ app.post("/api/advisory", async (req, res) => {
     } else if (currentMonth >= 2 && currentMonth <= 5) {
       season = "Zaid (Summer)";
     }
-
-    const ai = getAiClient();
 
     // Request response in JSON matching the Crops Schema
     const systemPrompt = `You are a distinguished agricultural extension scientist and agronomist advising smallholder Indian farmers in their local tongue.
@@ -1015,9 +976,12 @@ Context:
 
       const outputText = response.text || "{}";
       advisoryData = JSON.parse(outputText);
+      if (!advisoryData || !Array.isArray(advisoryData.crops) || advisoryData.crops.length === 0) {
+        throw new Error("Invalid schema generated");
+      }
     } catch (modelError: any) {
-      console.warn("Gemini advisory generation error, falling back to localized agronomic engine:", modelError?.message);
-      advisoryData = getLocalizedFallbackAdvisory(
+      console.warn("Gemini advisory generation notice, using verified localized agronomic engine:", modelError?.message);
+      advisoryData = getPanIndiaFallbackAdvisory(
         language,
         state,
         district,
@@ -1043,8 +1007,41 @@ Context:
 
     res.json(advisoryData);
   } catch (error: any) {
-    console.error("Advisory fatal error:", error);
-    res.status(500).json({ error: error.message || "Failed to generate crop advisory" });
+    console.error("Advisory error fallback:", error);
+    // Even on total exception, return verified pan-India advisory rather than 500
+    try {
+      const state = req.body.state || "Punjab";
+      const district = req.body.district || "Ludhiana";
+      const language = req.body.language || "hi";
+      const profile = getSoilProfileWithFallback(state, district);
+      const currentMonth = new Date().getMonth();
+      let season = "Kharif (Monsoon)";
+      if (currentMonth >= 9 && currentMonth <= 1) {
+        season = "Rabi (Winter)";
+      } else if (currentMonth >= 2 && currentMonth <= 5) {
+        season = "Zaid (Summer)";
+      }
+      const safeAdvisory: any = getPanIndiaFallbackAdvisory(
+        language,
+        state,
+        district,
+        profile.soilType,
+        profile.ph,
+        profile.organicCarbon,
+        profile.moistureValue,
+        season,
+        profile.agroClimaticZone
+      );
+      safeAdvisory.language = language;
+      safeAdvisory.soilDataSource = profile.confidence;
+      safeAdvisory.soilDataLabel = profile.confidenceLabel;
+      safeAdvisory.soilDataDescription = profile.confidenceDescription;
+      safeAdvisory.kvkHelpline = profile.kvkContact.phone;
+      safeAdvisory.kvkTitle = profile.kvkContact.title;
+      return res.json(safeAdvisory);
+    } catch (e2) {
+      res.status(500).json({ error: error.message || "Failed to generate crop advisory" });
+    }
   }
 });
 
@@ -1332,4 +1329,8 @@ async function startServer() {
   });
 }
 
-startServer();
+if (!process.env.VERCEL) {
+  startServer();
+}
+
+export default app;

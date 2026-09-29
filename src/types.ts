@@ -130,6 +130,12 @@ export interface DiseaseDiagnosisResponse {
   audioTranscript?: string;
   language?: string;
   kvkAdvice?: string;
+  kvkContact?: {
+    title: string;
+    phone: string;
+    helpline?: string;
+    address?: string;
+  };
 }
 
 export interface AnonymizedReport {

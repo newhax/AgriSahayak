@@ -237,8 +237,9 @@ export default function FarmerFriendChat({
               }
               try {
                 const parsed = JSON.parse(dataStr);
-                if (parsed.delta) {
-                  accumulatedText += parsed.delta;
+                const chunk = parsed.delta ?? (parsed.type === "chunk" ? parsed.text : "");
+                if (chunk) {
+                  accumulatedText += chunk;
                   setMessages((prev) =>
                     prev.map((msg) =>
                       msg.id === botMessageId
@@ -246,12 +247,12 @@ export default function FarmerFriendChat({
                         : msg
                     )
                   );
-                } else if (parsed.text) {
-                  accumulatedText = parsed.text;
+                } else if (parsed.fullText) {
+                  accumulatedText = parsed.fullText;
                   setMessages((prev) =>
                     prev.map((msg) =>
                       msg.id === botMessageId
-                        ? { ...msg, text: accumulatedText, isStreaming: true }
+                        ? { ...msg, text: accumulatedText, isStreaming: false }
                         : msg
                     )
                   );
