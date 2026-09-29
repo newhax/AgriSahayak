@@ -322,15 +322,18 @@ export default function FarmerFriendChat({
         );
       }
     } catch (err: any) {
-      console.warn("Farmer Friend Chat streaming warning:", err);
-      // Fallback response
-      const fallbackReply = `Hello! In ${selectedDistrict}, ${selectedState}, you can explore Crop Advisory for best seeds, Plant Doctor for diseased leaves, and Outbreak Radar for maps.`;
+      console.warn("Farmer Friend Chat streaming notice:", err);
+      const errorText =
+        err?.message ||
+        (selectedLanguage === "hi"
+          ? "जेमिनी एआई से संपर्क करने में समस्या आई। कृपया अपना सवाल पुनः पूछें।"
+          : "Unable to connect to Gemini AI in real time. Please try sending your question again.");
       setMessages((prev) =>
         prev.map((msg) =>
           msg.id === botMessageId
             ? {
                 ...msg,
-                text: fallbackReply,
+                text: errorText,
                 isStreaming: false,
                 suggestions: loc.quickPrompts.slice(0, 3),
               }

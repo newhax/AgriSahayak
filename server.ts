@@ -810,58 +810,17 @@ CRITICAL MANDATE - ANSWER THE FARMER'S SPECIFIC QUESTION DIRECTLY:
       });
     }
 
-    // Fallback if Gemini models could not stream or respond
-    console.warn("Using intelligent agricultural fallback for chat query:", message);
-    const fallback = getIntelligentChatFallback(
-      message,
-      language,
-      district,
-      state,
-      soilType,
-      ph,
-      moistureValue
-    );
-
-    if (isStreaming) {
-      const words = fallback.reply.split(" ");
-      for (let i = 0; i < words.length; i += 3) {
-        const slice = words.slice(i, i + 3).join(" ") + (i + 3 < words.length ? " " : "");
-        sendSSE({
-          type: "chunk",
-          delta: slice,
-          text: slice,
-        });
-        await new Promise((resolve) => setTimeout(resolve, 20));
-      }
-
-      sendSSE({
-        type: "done",
-        fullText: fallback.reply,
-        suggestions: fallback.suggestions,
-        actionTarget: fallback.actionTarget,
-        agentBadge: fallback.agentBadge,
-      });
-      res.write("data: [DONE]\n\n");
-      return res.end();
-    }
-
-    return res.json({
-      reply: fallback.reply,
-      text: fallback.reply,
-      suggestions: fallback.suggestions,
-      actionTarget: fallback.actionTarget,
-      agentBadge: fallback.agentBadge,
-    });
+    throw new Error("Unable to connect to Gemini AI. Please check your network connection or API configuration.");
   } catch (error: any) {
-    console.error("Fatal chat stream error:", error);
+    console.error("Chat error:", error);
     if (isStreaming) {
       sendSSE({
         type: "error",
-        error: error.message || "Failed to process chat stream",
+        error: error.message || "Failed to process chat with Gemini AI",
       });
       res.end();
     } else {
-      res.status(500).json({ error: error.message || "Failed to process chat stream" });
+      res.status(500).json({ error: error.message || "Failed to process chat with Gemini AI" });
     }
   }
 });
@@ -933,71 +892,54 @@ Context:
 - 7-day weather forecast: ${weatherSummary}
 - Farmer's question: "${query}"`;
 
-    let advisoryData: any = null;
-
-    try {
-      const response = await generateContentWithFallback({
-        model: "gemini-3.8-flash",
-        contents: "Generate agricultural advisory based on the expert instructions.",
-        config: {
-          systemInstruction: systemPrompt,
-          thinkingConfig: {
-            thinkingLevel: ThinkingLevel.LOW,
-          },
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              crops: {
-                type: Type.ARRAY,
-                items: {
-                  type: Type.OBJECT,
-                  properties: {
-                    cropName: { type: Type.STRING, description: "Name of the crop in target language" },
-                    rationale: { type: Type.STRING, description: "Reasoning tied to soil, weather, or satellite data in target language" },
-                    expectedYield: { type: Type.STRING, description: "Expected yield estimate in target language" },
-                    sowingWindow: { type: Type.STRING, description: "Recommended window for sowing in target language" }
-                  },
-                  required: ["cropName", "rationale", "expectedYield", "sowingWindow"]
-                }
-              },
-              regenerativePractices: {
-                type: Type.ARRAY,
-                items: { type: Type.STRING },
-                description: "Recommended organic/regenerative practices in target language"
-              },
-              riskMitigation: {
-                type: Type.STRING,
-                description: "Seasonal risk warning and mitigation advice in target language"
-              },
-              audioTranscript: {
-                type: Type.STRING,
-                description: "Complete spoken audio broadcast transcript in target language"
+    const response = await generateContentWithFallback({
+      model: "gemini-3.8-flash",
+      contents: "Generate agricultural advisory based on the expert instructions.",
+      config: {
+        systemInstruction: systemPrompt,
+        thinkingConfig: {
+          thinkingLevel: ThinkingLevel.LOW,
+        },
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            crops: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  cropName: { type: Type.STRING, description: "Name of the crop in target language" },
+                  rationale: { type: Type.STRING, description: "Reasoning tied to soil, weather, or satellite data in target language" },
+                  expectedYield: { type: Type.STRING, description: "Expected yield estimate in target language" },
+                  sowingWindow: { type: Type.STRING, description: "Recommended window for sowing in target language" }
+                },
+                required: ["cropName", "rationale", "expectedYield", "sowingWindow"]
               }
             },
-            required: ["crops", "regenerativePractices", "riskMitigation", "audioTranscript"]
-          }
+            regenerativePractices: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING },
+              description: "Recommended organic/regenerative practices in target language"
+            },
+            riskMitigation: {
+              type: Type.STRING,
+              description: "Seasonal risk warning and mitigation advice in target language"
+            },
+            audioTranscript: {
+              type: Type.STRING,
+              description: "Complete spoken audio broadcast transcript in target language"
+            }
+          },
+          required: ["crops", "regenerativePractices", "riskMitigation", "audioTranscript"]
         }
-      });
-
-      const outputText = response.text || "{}";
-      advisoryData = JSON.parse(outputText);
-      if (!advisoryData || !Array.isArray(advisoryData.crops) || advisoryData.crops.length === 0) {
-        throw new Error("Invalid schema generated");
       }
-    } catch (modelError: any) {
-      console.warn("Gemini advisory generation notice, using verified localized agronomic engine:", modelError?.message);
-      advisoryData = getPanIndiaFallbackAdvisory(
-        language,
-        state,
-        district,
-        soilType,
-        ph,
-        organicCarbon,
-        moistureValue,
-        season,
-        agroClimaticZone
-      );
+    });
+
+    const outputText = response.text || "{}";
+    const advisoryData = JSON.parse(outputText);
+    if (!advisoryData || !Array.isArray(advisoryData.crops) || advisoryData.crops.length === 0) {
+      throw new Error("Invalid schema generated by Gemini AI");
     }
 
     // Ensure audioTranscript, language, and data confidence metadata are present
@@ -1013,41 +955,8 @@ Context:
 
     res.json(advisoryData);
   } catch (error: any) {
-    console.error("Advisory error fallback:", error);
-    // Even on total exception, return verified pan-India advisory rather than 500
-    try {
-      const state = req.body.state || "Punjab";
-      const district = req.body.district || "Ludhiana";
-      const language = req.body.language || "hi";
-      const profile = getSoilProfileWithFallback(state, district);
-      const currentMonth = new Date().getMonth();
-      let season = "Kharif (Monsoon)";
-      if (currentMonth >= 9 && currentMonth <= 1) {
-        season = "Rabi (Winter)";
-      } else if (currentMonth >= 2 && currentMonth <= 5) {
-        season = "Zaid (Summer)";
-      }
-      const safeAdvisory: any = getPanIndiaFallbackAdvisory(
-        language,
-        state,
-        district,
-        profile.soilType,
-        profile.ph,
-        profile.organicCarbon,
-        profile.moistureValue,
-        season,
-        profile.agroClimaticZone
-      );
-      safeAdvisory.language = language;
-      safeAdvisory.soilDataSource = profile.confidence;
-      safeAdvisory.soilDataLabel = profile.confidenceLabel;
-      safeAdvisory.soilDataDescription = profile.confidenceDescription;
-      safeAdvisory.kvkHelpline = profile.kvkContact.phone;
-      safeAdvisory.kvkTitle = profile.kvkContact.title;
-      return res.json(safeAdvisory);
-    } catch (e2) {
-      res.status(500).json({ error: error.message || "Failed to generate crop advisory" });
-    }
+    console.error("Advisory error:", error);
+    res.status(500).json({ error: error.message || "Failed to generate real-time AI crop advisory" });
   }
 });
 

@@ -60,7 +60,7 @@ export default function FloatingCopilot({
       sender: "copilot",
       text,
       timestamp: "Just now",
-      agentBadge: loc.friendName || "Hero Assistant",
+      agentBadge: loc.friendName || "Farmer's Friend",
       suggestions: loc.quickPrompts,
     };
   };
@@ -129,7 +129,7 @@ export default function FloatingCopilot({
           sender: "copilot",
           text: loc.browserVoiceNotice || "Voice input is not supported in this browser.",
           timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-          agentBadge: loc.friendName || "Hero Assistant",
+          agentBadge: loc.friendName || "Farmer's Friend",
         },
       ]);
       return;
@@ -182,7 +182,7 @@ export default function FloatingCopilot({
       sender: "copilot",
       text: "",
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      agentBadge: loc.friendName || "Hero Assistant",
+      agentBadge: loc.friendName || "Farmer's Friend",
       isStreaming: true,
     };
 
@@ -317,17 +317,17 @@ export default function FloatingCopilot({
       }
     } catch (err: any) {
       console.warn("Hero Assistant chat error:", err);
-      const fallbackReply = selectedLanguage === "hi"
-        ? `राम-राम भाई! ${selectedDistrict} (${selectedState}) में आपके सवाल "${text}" के संबंध में: संतुलित जैविक खाद, सही समय पर सिंचाई और आईसीएआर की वैज्ञानिक पद्धतियों का पालन करें। अधिक जानकारी के लिए 'फसल सलाह' [ACTION:advisory] या 'रोग निदान' [ACTION:diagnosis] देखें।`
-        : selectedLanguage === "pa"
-        ? `ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ ਵੀਰ ਜੀ! ${selectedDistrict} ਵਿੱਚ ਤੁਹਾਡੇ ਸਵਾਲ "${text}" ਲਈ: ਸੰਤੁਲਿਤ ਦੇਸੀ ਖਾਦ ਅਤੇ ਸਮੇਂ ਸਿਰ ਪਾਣੀ ਲਗਾਓ। ਹੋਰ ਜਾਣਕਾਰੀ ਲਈ 'ਫ਼ਸਲ ਸਲਾਹ' [ACTION:advisory] ਜਾਂ 'ਫ਼ਸਲ ਡਾਕਟਰ' [ACTION:diagnosis] ਖੋਲ੍ਹੋ।`
-        : `Hello my friend! For ${selectedDistrict}, ${selectedState} regarding "${text}": We recommend balanced nutrition and moisture-conserving practices. You can also explore Crop Advisory [ACTION:advisory] or Plant Doctor [ACTION:diagnosis].`;
+      const errorText =
+        err?.message ||
+        (selectedLanguage === "hi"
+          ? "जेमिनी एआई से संपर्क करने में समस्या आई। कृपया अपना सवाल पुनः पूछें।"
+          : "Unable to connect to Gemini AI in real time. Please try sending your question again.");
       setMessages((prev) =>
         prev.map((msg) =>
           msg.id === botMessageId
             ? {
                 ...msg,
-                text: fallbackReply,
+                text: errorText,
                 isStreaming: false,
                 suggestions: loc.quickPrompts.slice(0, 3),
               }
@@ -477,9 +477,9 @@ export default function FloatingCopilot({
       <button
         onClick={() => setIsOpen((prev) => !prev)}
         className="fab-trigger"
-        aria-label={isOpen ? "Close AI Assistant" : "Open AI Assistant"}
-        title={isOpen ? "Close AI Assistant" : "Hero Assistant"}
-        id="hero-assistant-fab"
+        aria-label={isOpen ? "Close Farmer's Friend" : (loc.friendName || "Farmer's Friend")}
+        title={isOpen ? "Close Farmer's Friend" : (loc.friendName || "Farmer's Friend")}
+        id="farmers-friend-fab"
       >
         <motion.div
           key={isOpen ? "close" : "open"}
@@ -488,7 +488,7 @@ export default function FloatingCopilot({
           exit={{ rotate: 45, opacity: 0, scale: 0.8 }}
           transition={{ duration: 0.18 }}
         >
-          {isOpen ? <X size={24} /> : <Bot size={26} />}
+          {isOpen ? <X size={24} /> : <span className="text-xl">👨‍🌾</span>}
         </motion.div>
       </button>
 
@@ -497,7 +497,7 @@ export default function FloatingCopilot({
         {isOpen && (
           <motion.div
             className="chat-window"
-            id="hero-assistant-panel"
+            id="farmers-friend-panel"
             initial={{ opacity: 0, scale: 0.88, y: 16 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.88, y: 16 }}
@@ -506,10 +506,10 @@ export default function FloatingCopilot({
             {/* Header Bar (.chat-head / .chat-header) */}
             <div className="chat-header">
               <div className="avatar-badge">
-                <Bot size={17} color="#ffffff" />
+                <span className="text-sm">👨‍🌾</span>
               </div>
               <div className="title-group">
-                <span className="title">Hero Assistant</span>
+                <span className="title">{loc.friendName || "Farmer's Friend"}</span>
                 <span className="subtitle">
                   <span className="status-dot" /> Live · Gemini AI · {selectedDistrict}
                 </span>

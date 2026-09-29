@@ -86,19 +86,21 @@ export default function App() {
   const handleSelectTab = (tab: "advisory" | "diagnosis" | "dashboard" | "friend") => {
     setActiveTab(tab);
     setIsMobileMenuOpen(false);
+    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
   };
 
   // Navigate to home / advisory tab and scroll to top
   const handleGoHome = () => {
     setActiveTab("advisory");
     setIsMobileMenuOpen(false);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
   };
 
   // Reset onboarding
   const handleResetProfile = () => {
     setIsOnboarded(false);
     setIsMobileMenuOpen(false);
+    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
   };
 
   const theme = isDarkMode ? darkTheme : lightTheme;
@@ -470,6 +472,10 @@ export default function App() {
               if (typeof window !== "undefined") {
                 localStorage.setItem("agrisahayak_language_chosen", "true");
               }
+              window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+              setTimeout(() => {
+                window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+              }, 40);
             }}
             isDarkMode={isDarkMode}
           />

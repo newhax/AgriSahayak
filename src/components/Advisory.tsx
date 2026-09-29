@@ -190,20 +190,13 @@ export default function Advisory({
     }
   }, [selectedLanguage, currentLangObj]);
 
-  // Auto-generate initial advisory for selected district on mount or when district changes if no advisory yet
-  useEffect(() => {
-    const defaultQuery = PRESET_QUERIES[selectedLanguage]?.[0] || "What should I plant this season for high yield?";
-    if (!result && !loading) {
-      executeAdvisory(defaultQuery, selectedLanguage);
-    }
-  }, [selectedState, selectedDistrict]);
-
-  // Re-generate if language changes and query exists
+  // Re-generate if language changes and an active query exists
   useEffect(() => {
     if (prevLangRef.current !== selectedLanguage) {
       prevLangRef.current = selectedLanguage;
-      const queryToUse = activeQuery || PRESET_QUERIES[selectedLanguage]?.[0] || "What should I plant this season for high yield?";
-      executeAdvisory(queryToUse, selectedLanguage);
+      if (activeQuery) {
+        executeAdvisory(activeQuery, selectedLanguage);
+      }
     }
   }, [selectedLanguage]);
 
@@ -266,12 +259,13 @@ export default function Advisory({
       });
 
       if (!response.ok) {
-        throw new Error(`Server returned HTTP ${response.status}`);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Server returned HTTP ${response.status}`);
       }
 
       const data: CropRecommendationResponse = await response.json();
       if (!data || !Array.isArray(data.crops) || data.crops.length === 0) {
-        throw new Error("Invalid advisory response format");
+        throw new Error("Invalid advisory response format from Gemini AI");
       }
 
       setResult(data);
@@ -307,37 +301,9 @@ export default function Advisory({
         console.warn("TTS generation warning:", ttsErr);
       }
     } catch (error: any) {
-      console.warn("API/Vercel network fallback, computing localized agro-climatic advisory:", error);
-      
-      const currentMonth = new Date().getMonth();
-      let season = "Kharif (Monsoon)";
-      if (currentMonth >= 9 && currentMonth <= 1) {
-        season = "Rabi (Winter)";
-      } else if (currentMonth >= 2 && currentMonth <= 5) {
-        season = "Zaid (Summer)";
-      }
-
-      const soil = getSoilProfileWithFallback(selectedState, selectedDistrict);
-      const fallbackData = getLocalizedFallbackAdvisory(
-        langToUse,
-        selectedState,
-        selectedDistrict,
-        soil.soilType,
-        soil.ph,
-        soil.organicCarbon,
-        soil.moistureValue,
-        season,
-        soil.agroClimaticZone
-      );
-
-      setResult(fallbackData);
-      const speechScript =
-        fallbackData.audioTranscript ||
-        `${fallbackData.crops?.map((c) => c.cropName).join(", ") || ""}. ${
-          fallbackData.riskMitigation || ""
-        }`;
-      setCurrentSpeechText(speechScript);
-      setErrorMessage(null);
+      console.error("Advisory error:", error);
+      setErrorMessage(error?.message || "Failed to generate real-time AI crop advisory. Please try again.");
+      setResult(null);
     } finally {
       setLoading(false);
     }

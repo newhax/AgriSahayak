@@ -273,7 +273,11 @@ export default function Onboarding({
 
                 <button
                   id="lang-continue-btn"
-                  onClick={() => setStep(2)}
+                  onClick={() => {
+                    setStep(2);
+                    const el = document.getElementById("onboarding-card");
+                    el?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }}
                   className={`${theme.primaryButton} min-h-[44px] sm:min-h-[48px] md:min-h-[52px] lg:min-h-[56px] w-full text-xs sm:text-sm md:text-base font-bold gap-2 py-2.5 sm:py-3 md:py-3.5 px-4 sm:px-6`}
                 >
                   <span>{t("onboarding.continue")}</span>
@@ -431,14 +435,21 @@ export default function Onboarding({
                 <div className="flex flex-col xs:flex-row space-y-2.5 xs:space-y-0 xs:space-x-3 sm:space-x-4 pt-3">
                   <button
                     id="location-back-btn"
-                    onClick={() => setStep(1)}
+                    onClick={() => {
+                      setStep(1);
+                      const el = document.getElementById("onboarding-card");
+                      el?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }}
                     className={`${theme.secondaryButton} min-h-[44px] sm:min-h-[48px] md:min-h-[52px] lg:min-h-[56px] flex-1 text-xs sm:text-sm md:text-base font-bold py-2.5 sm:py-3 md:py-3.5 px-4 sm:px-6`}
                   >
                     {t("onboarding.back")}
                   </button>
                   <button
                     id="onboarding-complete-btn"
-                    onClick={onComplete}
+                    onClick={() => {
+                      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+                      onComplete();
+                    }}
                     className={`${theme.primaryButton} min-h-[44px] sm:min-h-[48px] md:min-h-[52px] lg:min-h-[56px] flex-1 text-xs sm:text-sm md:text-base font-bold gap-2 py-2.5 sm:py-3 md:py-3.5 px-4 sm:px-6`}
                   >
                     <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
