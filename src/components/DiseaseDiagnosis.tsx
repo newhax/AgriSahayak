@@ -564,26 +564,52 @@ export default function DiseaseDiagnosis({
             </div>
           </div>
 
+          {/* Notice when ICAR Sample is selected */}
+          {selectedSample && (
+            <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl space-y-1 text-xs text-amber-900 dark:text-amber-200 shadow-2xs">
+              <div className="flex items-center gap-1.5 font-bold">
+                <Info className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                <span>
+                  {selectedLanguage === "hi"
+                    ? "प्रमाणित ICAR नमूना केवल संदर्भ अध्ययन हेतु है"
+                    : "Verified ICAR Sample is for Reference Only"}
+                </span>
+              </div>
+              <p className="text-[11px] text-amber-800 dark:text-amber-300 leading-snug">
+                {selectedLanguage === "hi"
+                  ? "एआई निदान (AI Diagnosis) चलाने के लिए कृपया अपनी खेत की फोटो अपलोड करें। संदर्भ नमूने केवल रोग अध्ययन के लिए हैं।"
+                  : "To run AI diagnosis, please upload or capture your own crop photo. Certified ICAR reference samples are for study & protocol reading."}
+              </p>
+            </div>
+          )}
+
           <motion.button
             id="run-diagnosis-btn"
-            disabled={!selectedImage || loading}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            disabled={!selectedImage || loading || !!selectedSample}
+            whileHover={{ scale: selectedSample ? 1 : 1.02 }}
+            whileTap={{ scale: selectedSample ? 1 : 0.98 }}
             onClick={runDiagnosis}
-            className={`${theme.primaryButton} min-h-[44px] sm:min-h-[48px] md:min-h-[52px] lg:min-h-[56px] w-full text-xs sm:text-sm md:text-base font-bold cursor-pointer disabled:opacity-40 py-2.5 sm:py-3 md:py-3.5 px-4 sm:px-6 md:px-8 gap-2`}
+            className={`${theme.primaryButton} min-h-[44px] sm:min-h-[48px] md:min-h-[52px] lg:min-h-[56px] w-full text-xs sm:text-sm md:text-base font-bold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed py-2.5 sm:py-3 md:py-3.5 px-4 sm:px-6 md:px-8 gap-2`}
           >
             {loading ? (
               <>
                 <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin mr-2 shrink-0" />
                 <span>{t("diagnosis.diagnosing")}</span>
               </>
+            ) : selectedSample ? (
+              <>
+                <Upload className="w-4 h-4 sm:w-5 sm:h-5 mr-2 shrink-0" />
+                <span>
+                  {selectedLanguage === "hi"
+                    ? "निदान के लिए फोटो अपलोड करें (Upload Photo to Run AI)"
+                    : "Upload Your Photo to Run AI Diagnosis"}
+                </span>
+              </>
             ) : (
               <>
                 <FileImage className="w-4 h-4 sm:w-5 sm:h-5 mr-2 shrink-0" />
                 <span>
-                  {selectedSample
-                    ? `Run AI Diagnosis on ${selectedSample.name}`
-                    : `${t("diagnosis.uploadButton")} / ${t("diagnosis.title")}`}
+                  {t("diagnosis.uploadButton")} / {t("diagnosis.title")}
                 </span>
               </>
             )}
@@ -596,6 +622,8 @@ export default function DiseaseDiagnosis({
             <DiagnosisSkeleton
               theme={theme}
               selectedDistrict={selectedDistrict}
+              selectedState={selectedState}
+              selectedLanguage={selectedLanguage}
             />
           )}
 

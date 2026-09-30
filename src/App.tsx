@@ -115,7 +115,7 @@ export default function App() {
         className="sticky top-0 z-50 px-2.5 sm:px-4 md:px-8 py-2 sm:py-3 transition-colors duration-200 w-full"
         id="main-header"
       >
-        <div className="max-w-7xl mx-auto flex items-center justify-between glass-island-nav px-3 sm:px-4 lg:px-5 py-1.5 sm:py-2 rounded-2xl shadow-xs gap-2 lg:gap-3">
+        <div className="max-w-7xl mx-auto flex items-center justify-between glass-island-nav px-3 sm:px-4 lg:px-5 py-1.5 sm:py-2 rounded-2xl shadow-xs gap-2 sm:gap-3 lg:gap-4 overflow-hidden">
           {/* Brand Wordmark - Click takes user back to home/advisory view */}
           <button
             type="button"
@@ -127,76 +127,76 @@ export default function App() {
             <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-2xs group-hover:scale-105 group-hover:shadow-md transition-all shrink-0">
               <Sprout className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
-            <div className="hidden md:flex items-baseline space-x-1.5 sm:space-x-2">
+            <div className="hidden md:flex items-baseline space-x-1.5 sm:space-x-2 shrink-0">
               <span className="text-sm lg:text-base font-black tracking-tight text-[#18181b] dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors whitespace-nowrap">
                 {t("nav.title")}
               </span>
-              <span className="hidden xl:inline-block text-[10px] text-purple-700 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800 px-2 py-0.5 rounded-full font-bold whitespace-nowrap">
+              <span className="hidden 2xl:inline-block text-[10px] text-purple-700 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800 px-2 py-0.5 rounded-full font-bold whitespace-nowrap">
                 {t("nav.dpg")}
               </span>
             </div>
           </button>
 
-          {/* Desktop Navigation Tabs (Visible on md breakpoint and above with responsive padding) */}
+          {/* Desktop Navigation Tabs (Visible on md breakpoint and above with responsive flex constraint) */}
           {isOnboarded ? (
-            <nav className="hidden md:flex items-center space-x-1 lg:space-x-1.5" id="desktop-nav-tabs">
+            <nav className="hidden md:flex items-center justify-center flex-1 min-w-0 px-1 overflow-x-auto no-scrollbar gap-1 lg:gap-1.5" id="desktop-nav-tabs">
               <button
                 id="nav-tab-advisory"
                 onClick={() => handleSelectTab("advisory")}
-                className={`min-h-[40px] lg:min-h-[44px] px-2.5 lg:px-3.5 py-1.5 lg:py-2 rounded-xl text-xs lg:text-sm font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 shrink-0 ${
+                className={`min-h-[38px] lg:min-h-[42px] px-2.5 lg:px-3 py-1.5 lg:py-2 rounded-xl text-xs lg:text-sm font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 shrink-0 ${
                   activeTab === "advisory"
                     ? "bg-[#2563eb] text-white shadow-2xs"
                     : "text-[#71717a] dark:text-zinc-300 hover:text-[#18181b] dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800/60"
                 }`}
               >
                 <MessageSquare className="w-3.5 h-3.5 lg:w-4 lg:h-4 shrink-0" />
-                <span>{t("nav.advisory")}</span>
+                <span className="whitespace-nowrap">{t("nav.advisory")}</span>
               </button>
               <button
                 id="nav-tab-diagnosis"
                 onClick={() => handleSelectTab("diagnosis")}
-                className={`min-h-[40px] lg:min-h-[44px] px-2.5 lg:px-3.5 py-1.5 lg:py-2 rounded-xl text-xs lg:text-sm font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 shrink-0 ${
+                className={`min-h-[38px] lg:min-h-[42px] px-2.5 lg:px-3 py-1.5 lg:py-2 rounded-xl text-xs lg:text-sm font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 shrink-0 ${
                   activeTab === "diagnosis"
                     ? "bg-[#2563eb] text-white shadow-2xs"
                     : "text-[#71717a] dark:text-zinc-300 hover:text-[#18181b] dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800/60"
                 }`}
               >
                 <Stethoscope className="w-3.5 h-3.5 lg:w-4 lg:h-4 shrink-0" />
-                <span>{t("nav.diagnosis")}</span>
+                <span className="whitespace-nowrap">{t("nav.diagnosis")}</span>
               </button>
               <button
                 id="nav-tab-dashboard"
                 onClick={() => handleSelectTab("dashboard")}
-                className={`min-h-[40px] lg:min-h-[44px] px-2.5 lg:px-3.5 py-1.5 lg:py-2 rounded-xl text-xs lg:text-sm font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 shrink-0 ${
+                className={`min-h-[38px] lg:min-h-[42px] px-2.5 lg:px-3 py-1.5 lg:py-2 rounded-xl text-xs lg:text-sm font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 shrink-0 ${
                   activeTab === "dashboard"
                     ? "bg-[#2563eb] text-white shadow-2xs"
                     : "text-[#71717a] dark:text-zinc-300 hover:text-[#18181b] dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800/60"
                 }`}
               >
                 <Activity className="w-3.5 h-3.5 lg:w-4 lg:h-4 shrink-0" />
-                <span>{t("nav.outbreaks")}</span>
+                <span className="whitespace-nowrap">{t("nav.outbreaks")}</span>
               </button>
               <button
                 id="nav-tab-friend"
                 onClick={() => handleSelectTab("friend")}
-                className={`min-h-[40px] lg:min-h-[44px] px-2.5 lg:px-3.5 py-1.5 lg:py-2 rounded-xl text-xs lg:text-sm font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 shrink-0 ${
+                className={`min-h-[38px] lg:min-h-[42px] px-2.5 lg:px-3 py-1.5 lg:py-2 rounded-xl text-xs lg:text-sm font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 shrink-0 ${
                   activeTab === "friend"
                     ? "bg-emerald-600 text-white shadow-2xs"
                     : "text-[#71717a] dark:text-zinc-300 hover:text-emerald-700 dark:hover:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
                 }`}
                 title={getFriendLocalization(selectedLanguage).friendName}
               >
-                <span className="text-sm">👨‍🌾</span>
-                <span className="whitespace-nowrap">
+                <span className="text-sm shrink-0">👨‍🌾</span>
+                <span className="whitespace-nowrap truncate max-w-[120px] lg:max-w-[160px] xl:max-w-none">
                   {getFriendLocalization(selectedLanguage).friendName}
                 </span>
-                <span className="hidden xl:inline-block text-[9px] bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 px-1.5 py-0.5 rounded-full font-bold">
+                <span className="hidden 2xl:inline-block text-[9px] bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 px-1.5 py-0.5 rounded-full font-bold shrink-0">
                   {getFriendLocalization(selectedLanguage).friendBadge}
                 </span>
               </button>
             </nav>
           ) : (
-            <div className="hidden lg:flex items-center space-x-6 text-xs text-[#71717a] dark:text-zinc-300 font-semibold">
+            <div className="hidden lg:flex items-center space-x-4 xl:space-x-6 text-xs text-[#71717a] dark:text-zinc-300 font-semibold shrink-0">
               <span>{t("nav.autonomousAdvisory")}</span>
               <span>{t("nav.multimodalDiagnosis")}</span>
               <span>{t("nav.icarGrounding")}</span>
@@ -204,42 +204,40 @@ export default function App() {
           )}
 
           {/* Header Controls: Language Switcher, Theme & Action Buttons */}
-          <div className="flex items-center space-x-1.5 sm:space-x-2 md:space-x-2.5 shrink-0">
-            {/* Global Language Selector Dropdown (Hidden once a language is selected) */}
-            {!hasSelectedLanguage && !isOnboarded && (
-              <div className="relative flex items-center">
-                <label
-                  htmlFor="global-lang-selector"
-                  className="min-h-[40px] lg:min-h-[44px] flex items-center space-x-1.5 sm:space-x-2 bg-white dark:bg-zinc-800/95 px-2.5 sm:px-3 py-1.5 rounded-full border border-[#e7e7ea] dark:border-zinc-700 text-xs sm:text-sm font-semibold text-[#18181b] dark:text-zinc-200 shadow-2xs cursor-pointer hover:border-[#d4d4d8] dark:hover:border-zinc-600 transition-colors shrink-0"
+          <div className="flex items-center space-x-1.5 sm:space-x-2 lg:space-x-2.5 shrink-0">
+            {/* Global Language Selector Dropdown (Always visible for seamless multi-language switching across all features) */}
+            <div className="relative flex items-center shrink-0">
+              <label
+                htmlFor="global-lang-selector"
+                className="min-h-[38px] lg:min-h-[42px] flex items-center space-x-1.5 sm:space-x-2 bg-white dark:bg-zinc-800/95 px-2.5 sm:px-3 py-1.5 rounded-full border border-[#e7e7ea] dark:border-zinc-700 text-xs sm:text-sm font-semibold text-[#18181b] dark:text-zinc-200 shadow-2xs cursor-pointer hover:border-[#d4d4d8] dark:hover:border-zinc-600 transition-colors shrink-0"
+              >
+                <Globe className="w-4 h-4 text-[#2563eb] dark:text-blue-400 shrink-0" />
+                <select
+                  id="global-lang-selector"
+                  value={selectedLanguage}
+                  onChange={(e) => handleLanguageChange(e.target.value as Language)}
+                  className="bg-transparent text-xs sm:text-sm font-bold focus:outline-none cursor-pointer text-[#18181b] dark:text-white max-w-[68px] xs:max-w-[84px] sm:max-w-none pr-1"
+                  title="Switch Language / भाषा बदलें"
+                  aria-label="Select language"
                 >
-                  <Globe className="w-4 h-4 text-[#2563eb] dark:text-blue-400 shrink-0" />
-                  <select
-                    id="global-lang-selector"
-                    value={selectedLanguage}
-                    onChange={(e) => handleLanguageChange(e.target.value as Language)}
-                    className="bg-transparent text-xs sm:text-sm font-bold focus:outline-none cursor-pointer text-[#18181b] dark:text-white max-w-[64px] xs:max-w-[78px] sm:max-w-none pr-1"
-                    title="Switch Language / भाषा बदलें"
-                    aria-label="Select language"
-                  >
-                    {SUPPORTED_LANGUAGES.map((l) => (
-                      <option
-                        key={l.code}
-                        value={l.code}
-                        className="bg-white dark:bg-zinc-900 text-[#18181b] dark:text-white py-1"
-                      >
-                        {l.nativeName} ({l.code.toUpperCase()})
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-            )}
+                  {SUPPORTED_LANGUAGES.map((l) => (
+                    <option
+                      key={l.code}
+                      value={l.code}
+                      className="bg-white dark:bg-zinc-900 text-[#18181b] dark:text-white py-1"
+                    >
+                      {l.nativeName} ({l.code.toUpperCase()})
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
 
             {/* Dark Mode Toggle */}
             <button
               onClick={() => setIsDarkMode(!isDarkMode)}
               id="theme-toggle-btn"
-              className="min-h-[40px] min-w-[40px] lg:min-h-[44px] lg:min-w-[44px] p-2 lg:p-2.5 rounded-full border border-[#e7e7ea] dark:border-zinc-700 bg-white dark:bg-zinc-800/95 hover:bg-zinc-50 dark:hover:bg-zinc-700 text-[#18181b] dark:text-zinc-200 transition-all cursor-pointer shadow-2xs flex items-center justify-center shrink-0"
+              className="min-h-[38px] min-w-[38px] lg:min-h-[42px] lg:min-w-[42px] p-2 lg:p-2.5 rounded-full border border-[#e7e7ea] dark:border-zinc-700 bg-white dark:bg-zinc-800/95 hover:bg-zinc-50 dark:hover:bg-zinc-700 text-[#18181b] dark:text-zinc-200 transition-all cursor-pointer shadow-2xs flex items-center justify-center shrink-0"
               title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
               aria-label="Toggle theme mode"
             >
@@ -252,11 +250,11 @@ export default function App() {
 
             {/* Farm Profile / Get Started Actions */}
             {isOnboarded ? (
-              <div className="flex items-center space-x-1 sm:space-x-1.5" id="header-profile">
-                {/* Active location tag (Visible on lg and above) */}
-                <div className="hidden lg:flex items-center space-x-1.5 text-xs bg-[#eff4ff] dark:bg-blue-950/60 px-2.5 lg:px-3 py-1.5 rounded-full border border-blue-200 dark:border-blue-800/60 font-bold text-[#2563eb] dark:text-blue-300 shadow-2xs min-h-[40px] shrink-0">
+              <div className="flex items-center space-x-1 sm:space-x-1.5 shrink-0" id="header-profile">
+                {/* Active location tag (Visible on xl and above) */}
+                <div className="hidden xl:flex items-center space-x-1.5 text-xs bg-[#eff4ff] dark:bg-blue-950/60 px-2.5 lg:px-3 py-1.5 rounded-full border border-blue-200 dark:border-blue-800/60 font-bold text-[#2563eb] dark:text-blue-300 shadow-2xs min-h-[38px] lg:min-h-[40px] shrink-0">
                   <MapPin className="w-3.5 h-3.5 text-[#2563eb] dark:text-blue-400 shrink-0" />
-                  <span className="truncate max-w-[80px] xl:max-w-[120px]">
+                  <span className="truncate max-w-[90px] 2xl:max-w-[130px]">
                     {selectedDistrict}
                   </span>
                 </div>
@@ -265,12 +263,12 @@ export default function App() {
                 <button
                   id="reset-profile-btn"
                   onClick={handleResetProfile}
-                  className={`${theme.secondaryButton} min-h-[40px] text-xs px-2.5 lg:px-3 py-1.5 gap-1.5 shrink-0`}
+                  className={`${theme.secondaryButton} min-h-[38px] lg:min-h-[40px] text-xs px-2.5 lg:px-3 py-1.5 gap-1.5 shrink-0`}
                   title={t("nav.changeFarm")}
                   aria-label="Change farm location"
                 >
                   <RefreshCw className="w-3.5 h-3.5 text-[#71717a] dark:text-zinc-300 shrink-0" />
-                  <span className="hidden xl:inline">{t("nav.changeFarm")}</span>
+                  <span className="hidden 2xl:inline">{t("nav.changeFarm")}</span>
                 </button>
               </div>
             ) : (
@@ -279,7 +277,7 @@ export default function App() {
                   const el = document.getElementById("onboarding-card");
                   el?.scrollIntoView({ behavior: "smooth" });
                 }}
-                className={`${theme.primaryButton} min-h-[40px] lg:min-h-[44px] text-xs sm:text-sm px-3.5 sm:px-5 py-1.5 sm:py-2 gap-1.5 shrink-0`}
+                className={`${theme.primaryButton} min-h-[38px] lg:min-h-[42px] text-xs sm:text-sm px-3.5 sm:px-5 py-1.5 sm:py-2 gap-1.5 shrink-0`}
               >
                 <span>{t("nav.getStarted")}</span>
                 <ArrowRight className="w-3.5 h-3.5 shrink-0" />
@@ -329,6 +327,25 @@ export default function App() {
                   >
                     {t("nav.changeFarm")}
                   </button>
+                </div>
+
+                {/* Mobile Language Switcher Row */}
+                <div className="flex items-center justify-between px-3 py-2 bg-zinc-50 dark:bg-zinc-800/60 rounded-xl border border-[#e7e7ea] dark:border-zinc-700">
+                  <span className="text-xs font-bold flex items-center gap-1.5 text-[#18181b] dark:text-white">
+                    <Globe className="w-4 h-4 text-blue-600" />
+                    Language / भाषा:
+                  </span>
+                  <select
+                    value={selectedLanguage}
+                    onChange={(e) => handleLanguageChange(e.target.value as Language)}
+                    className="bg-white dark:bg-zinc-900 text-xs font-bold px-2.5 py-1 rounded-lg border border-[#e7e7ea] dark:border-zinc-700 text-[#18181b] dark:text-white cursor-pointer"
+                  >
+                    {SUPPORTED_LANGUAGES.map((l) => (
+                      <option key={l.code} value={l.code}>
+                        {l.nativeName} ({l.code.toUpperCase()})
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 {/* Mobile Tab Links (All min-h-[44px] touch targets) */}
@@ -455,7 +472,7 @@ export default function App() {
 
       {/* Main App Container */}
       <main
-        className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-10 min-w-0"
+        className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-4 md:px-6 lg:px-8 pt-3 sm:pt-5 lg:pt-6 pb-6 sm:pb-8 md:pb-12 min-w-0"
         id="main-content"
       >
         {!isOnboarded ? (
