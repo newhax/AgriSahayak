@@ -564,7 +564,7 @@ export default function Advisory({
         </div>
       </motion.div>
 
-      {/* Loading Skeleton Screen */}
+      {/* Loading Screen with Farmer Tips */}
       {loading && (
         <AdvisorySkeleton
           theme={theme}
@@ -572,6 +572,7 @@ export default function Advisory({
           selectedDistrict={selectedDistrict}
           selectedState={selectedState}
           currentLangNative={currentLangObj.nativeName}
+          selectedLanguage={selectedLanguage}
         />
       )}
 
