@@ -1,6 +1,5 @@
 import express from "express";
 import path from "path";
-import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Modality, ThinkingLevel, Type } from "@google/genai";
 import dotenv from "dotenv";
 import { getLocalizedFallbackAdvisory as getPanIndiaFallbackAdvisory } from "./src/data/panIndiaAdvisory.js";
@@ -86,7 +85,7 @@ function pcmToWav(pcmBase64: string, sampleRate = 24000, numChannels = 1, bitsPe
 // Helper to perform generateContent calls with retry and model fallback to handle 503 high-demand exceptions
 async function generateContentWithFallback(params: any): Promise<any> {
   const originalModel = params.model || "gemini-3.8-flash";
-  
+
   // For TTS, try gemini-3.8-flash-lite-tts first, then gemini-3.1-flash-tts-preview
   const isTts = originalModel.includes("tts");
   const modelsToTry = isTts
@@ -107,15 +106,15 @@ async function generateContentWithFallback(params: any): Promise<any> {
       lastError = error;
       const status = error.status || (error.error && error.error.code);
       const message = error.message || "";
-      const isTransient = status === 503 || status === 429 || 
-                          message.includes("503") || 
-                          message.includes("temporary") || 
-                          message.includes("high demand") || 
-                          message.includes("rate limit") || 
+      const isTransient = status === 503 || status === 429 ||
+                          message.includes("503") ||
+                          message.includes("temporary") ||
+                          message.includes("high demand") ||
+                          message.includes("rate limit") ||
                           message.includes("UNAVAILABLE");
-      
+
       console.log(`[Gemini API] Notice: ${modelName} responded with status ${status || 'code ' + message.slice(0, 40)}. Rotating to fallback model...`);
-      
+
       if (attempt < maxAttempts - 1) {
         const delay = isTransient ? (attempt + 1) * 300 : 100;
         await new Promise(resolve => setTimeout(resolve, delay));
@@ -254,7 +253,7 @@ async function fetchDistrictWeather(lat: number, lng: number): Promise<string> {
       const maxTemps = data.daily.temperature_2m_max || [];
       const minTemps = data.daily.temperature_2m_min || [];
       const precipSums = data.daily.precipitation_sum || [];
-      
+
       let summary = "7-day Outlook: ";
       for (let i = 0; i < Math.min(3, days.length); i++) {
         summary += `${days[i]}: Max ${maxTemps[i]}°C, Min ${minTemps[i]}°C, Rain: ${precipSums[i]}mm; `;
@@ -275,9 +274,9 @@ app.get("/api/weather-alerts", async (req, res) => {
     const district = String(req.query.district || "Ludhiana");
     const state = String(req.query.state || "Punjab");
     const coords = getDistrictCoordinates(district, state);
-    
+
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${coords.lat}&longitude=${coords.lng}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,rain,weather_code,wind_speed_10m,wind_gusts_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,wind_gusts_10m_max,uv_index_max&timezone=auto&forecast_days=7`;
-    
+
     const response = await fetch(url);
     if (!response.ok) {
       return res.status(502).json({ error: "Open-Meteo upstream error" });
@@ -832,7 +831,7 @@ app.post(["/api/advisory", "/advisory"], async (req, res) => {
     const district = req.body.district || "Ludhiana";
     const language = req.body.language || "hi";
     const query = req.body.query || req.body.prompt || req.body.question;
-    
+
     if (!query || typeof query !== "string" || !query.trim()) {
       return res.status(400).json({ error: "Missing query or prompt text parameter" });
     }
@@ -1034,7 +1033,7 @@ CRITICAL TREATMENT INTEGRITY RULES:
     // If a valid state and district are provided, automatically log the diagnosis into our shared memory pool
     if (state && district && diagnosis.disease && diagnosis.disease.toLowerCase() !== "not a plant") {
       const coords = getDistrictCoordinates(district, state);
-      
+
       const newReport: Report = {
         id: `rep_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
         state,
@@ -1223,9 +1222,15 @@ app.post(["/api/tts", "/tts"], async (req, res) => {
   }
 });
 
-// Setup Vite or static serving
+// Setup Vite (dev only) or static serving (production).
+// IMPORTANT: "vite" is imported dynamically, ONLY inside the dev branch below.
+// This ensures the Vite/Rollup module (and its platform-specific native binding)
+// is never loaded at all in production/serverless (Vercel), which is what was
+// previously causing "Cannot find module '@rollup/rollup-linux-x64-gnu'" crashes
+// at request time even though startServer() itself is never called on Vercel.
 async function startServer() {
   if (process.env.NODE_ENV !== "production") {
+    const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
