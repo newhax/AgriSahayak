@@ -40,3 +40,12 @@ Onboarding a new state node takes less than 10 minutes and does not require core
 1. **Append Soil metadata**: Insert the district constants (soil type, pH average, organic carbon, NDVI baseline) to `src/data.ts`.
 2. **Assign GPS Coordinates**: Maps coordinates to `DISTRICT_COORDS` in `src/data.ts` to automatically activate Open-Meteo forecast fetching.
 3. **Toggle Regional Language support**: Simply select the language (e.g. Marathi, Bengali) in the landing screen to propagate target system translations dynamically in Gemini prompts.
+
+---
+
+## 4. Deployment & Dependency Management Note
+
+- `package-lock.json` is intentionally excluded from version control via `.gitignore`.
+- This ensures that cloud build platforms (such as Vercel on Linux x64) run `npm install` directly on the target OS architecture to resolve native Rollup/Vite optional dependencies (`@rollup/rollup-linux-x64-gnu`) without platform-specific lockfile mismatches from local macOS or Windows development machines.
+- Vercel Install Command: `npm install` (default when no lockfile is present).
+
