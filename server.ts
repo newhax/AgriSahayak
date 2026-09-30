@@ -317,7 +317,7 @@ const LANG_MAP: Record<string, string> = {
   kok: "Konkani (कोंकणी)",
   sd: "Sindhi (سنڌي / सिन्धी)",
   doi: "Dogri (डोगरी)",
-  mni: "Manipuri / Meitei (মৈতৈলোন্)",
+  mni: "Manipuri / Meitei (मৈতৈলোন্)",
   brx: "Bodo (बर')",
   sa: "Sanskrit (संस्कृतम्)",
 };
